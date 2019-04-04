@@ -1,0 +1,32 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:/Keil_v5/ARM/ARMCC/include",
+                "${workspaceFolder}/ROS_STM32F1/BSP/motor",
+                "${workspaceFolder}/ROS_STM32F1/BSP/i2c",
+                "${workspaceFolder}/ROS_STM32F1/BSP/usart",
+                "${workspaceFolder}/ROS_STM32F1/Libraries/CMSIS",
+                "${workspaceFolder}/ROS_STM32F1/Libraries/ROSLib",
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/ROS_STM32F1/Libraries/STM32F10x_StdPeriph_Driver/inc",
+                "${workspaceFolder}/ROS_STM32F1/BSP/systick",
+                "${workspaceFolder}/ROS_STM32F1/BSP/led",
+                "${workspaceFolder}/ROS_STM32F1/BSP",
+                "${workspaceFolder}/ROS_STM32F1/BSP/encoder",
+                "${workspaceFolder}/ROS_STM32F1/BSP/mpu6050",
+                "${workspaceFolder}/ROS_STM32F1/BSP/mpu6050/dmp"
+            ],
+            "defines": [
+                "USE_STDPERIPH_DRIVER",
+                "STM32F10X_MD",
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
