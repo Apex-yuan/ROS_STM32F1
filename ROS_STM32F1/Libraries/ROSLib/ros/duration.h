@@ -1,4 +1,4 @@
-/* 
+/*
  * Software License Agreement (BSD License)
  *
  * Copyright (c) 2011, Willow Garage, Inc.
@@ -36,34 +36,39 @@
 #define _ROS_DURATION_H_
 
 #include <math.h>
+#include <stdint.h>
 #include "round.h"
 
-namespace ros {
+namespace ros
+{
 
-  void normalizeSecNSecSigned(long& sec, long& nsec);
+void normalizeSecNSecSigned(int32_t& sec, int32_t& nsec);
 
-  class Duration
+class Duration
+{
+public:
+  int32_t sec, nsec;
+
+  Duration() : sec(0), nsec(0) {}
+  Duration(int32_t _sec, int32_t _nsec) : sec(_sec), nsec(_nsec)
   {
-    public:
-      long sec, nsec; 
-      
-      Duration() : sec(0), nsec(0) {}
-      Duration(long _sec, long _nsec) : sec(_sec), nsec(_nsec)
-      {
-        normalizeSecNSecSigned(sec, nsec);
-      }
+    normalizeSecNSecSigned(sec, nsec);
+  }
 
-      double toSec() const { return (double)sec + 1e-9*(double)nsec; };
-      void fromSec(double t) 
-			{ 
-				sec = (unsigned long)floor(t); 
-				nsec = (unsigned long)ros_round((t-sec) * 1e9); 
-			};
-
-      Duration& operator+=(const Duration &rhs);
-      Duration& operator-=(const Duration &rhs);
-      Duration& operator*=(double scale);
+  double toSec() const
+  {
+    return (double)sec + 1e-9 * (double)nsec;
   };
+  void fromSec(double t)
+  {
+    sec = (uint32_t) floor(t);
+    nsec = (uint32_t) round((t - sec) * 1e9);
+  };
+
+  Duration& operator+=(const Duration &rhs);
+  Duration& operator-=(const Duration &rhs);
+  Duration& operator*=(double scale);
+};
 
 }
 

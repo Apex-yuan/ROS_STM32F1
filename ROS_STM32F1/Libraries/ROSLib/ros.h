@@ -40,7 +40,19 @@
 
 namespace ros
 {
-typedef NodeHandle_<STM32Hardware, 25, 25, 1024, 1024> NodeHandle;
+#if defined(__AVR_ATmega8__) || defined(__AVR_ATmega168__)
+  /* downsize our buffers */
+  typedef NodeHandle_<ArduinoHardware, 6, 6, 150, 150> NodeHandle;
+
+#elif defined(__AVR_ATmega328P__)
+
+  typedef NodeHandle_<ArduinoHardware, 25, 25, 280, 280> NodeHandle;
+
+#else
+  /* Publishers, Subscribers, Buffer Sizes for STM32F1*/
+  typedef NodeHandle_<STM32Hardware, 25, 25, 1024, 1024> NodeHandle;
+
+#endif
 }
 
 #endif

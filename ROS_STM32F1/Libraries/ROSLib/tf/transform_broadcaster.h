@@ -1,4 +1,4 @@
-/* 
+/*
  * Software License Agreement (BSD License)
  *
  * Copyright (c) 2011, Willow Garage, Inc.
@@ -35,32 +35,33 @@
 #ifndef ROS_TRANSFORM_BROADCASTER_H_
 #define ROS_TRANSFORM_BROADCASTER_H_
 
+#include "ros.h"
 #include "tfMessage.h"
 
 namespace tf
 {
 
-  class TransformBroadcaster
+class TransformBroadcaster
+{
+public:
+  TransformBroadcaster() : publisher_("/tf", &internal_msg) {}
+
+  void init(ros::NodeHandle &nh)
   {
-    public:
-      TransformBroadcaster() : publisher_("/tf", &internal_msg) {}
+    nh.advertise(publisher_);
+  }
 
-      void init(ros::NodeHandle &nh)
-      {
-        nh.advertise(publisher_);
-      }
+  void sendTransform(geometry_msgs::TransformStamped &transform)
+  {
+    internal_msg.transforms_length = 1;
+    internal_msg.transforms = &transform;
+    publisher_.publish(&internal_msg);
+  }
 
-      void sendTransform(geometry_msgs::TransformStamped &transform)
-      {
-        internal_msg.transforms_length = 1;
-        internal_msg.transforms = &transform;
-        publisher_.publish(&internal_msg);
-      }
-
-    private:
-      tf::tfMessage internal_msg;
-      ros::Publisher publisher_;
-  };
+private:
+  tf::tfMessage internal_msg;
+  ros::Publisher publisher_;
+};
 
 }
 

@@ -13,7 +13,7 @@ void TIM1_TIMER_Init(uint16_t arr, uint16_t psc)
   TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
   TIM_TimeBaseInit(TIM1,&TIM_TimeBaseInitStructure);
   
-  TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
+  //TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
   //TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
   TIM_ITConfig(  //使能或者失能指定的TIM1中断
 		TIM1, //TIM1
@@ -28,7 +28,7 @@ void TIM1_TIMER_Init(uint16_t arr, uint16_t psc)
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
   
-  TIM_Cmd(TIM1, DISABLE);
+  TIM_Cmd(TIM1, ENABLE);
 }
 
 ////中断服务函数

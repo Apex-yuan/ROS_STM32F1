@@ -15,6 +15,9 @@
 #include <std_msgs/Empty.h>
 #include <sensor_msgs/Imu.h>
 
+ros::Time addMicros(ros::Time & t, uint32_t _micros);
+void updateTime(); 
+ros::Time rosNow();
 
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg);
 void ledCallback(const std_msgs::Empty& led_msg);
@@ -36,6 +39,8 @@ void sendLogMsg(void);
 
 /* ROS NodeHandle ------------------------------------------------------------------*/
 ros::NodeHandle nh;
+ros::Time current_time;
+uint32_t current_offset;
 
 /* Publisher ---------------------------------------------------------------------*/
 //Odometry
@@ -123,12 +128,13 @@ int main()
   
   initOdom();
   initJointStates();
-  // TIM_Cmd(TIM1, ENABLE); //若使用TIM1须在此处使能  
+
   prev_update_time = millis();
   
   while(1)
   {
     t = millis();
+    updateTime();
    if((t - tTime[0]) > (1000 / CMD_VEL_PUBLISH_FREQUENCY))
    {   
      updateGoalVelocity();
@@ -140,12 +146,12 @@ int main()
       publishDriveInformation();  
       tTime[2] = t;
     }    
-   if((t - tTime[3]) > (1000 / IMU_PUBLISH_FREQUENCY))
+   if((t - tTime[3]) >  (1000 / IMU_PUBLISH_FREQUENCY))
    {
      publishImuMsg();
      tTime[3] = t;
    }
-    if((t - tTime[4]) > (1000 / 10))
+    if((t - tTime[4]) > (1000 / 1000))
     {
       if(nh.connected())
       {
@@ -210,7 +216,7 @@ void initJointStates(void)
 //Publish msgs (IMU data:angular velocity, linear acceleration, orientation)
 void publishImuMsg(void)
 {
-  imu_msg.header.stamp  = nh.now();
+  imu_msg.header.stamp  = rosNow();
   imu_msg.header.frame_id = "imu_link";
   
   imu_msg.angular_velocity.x = gyro[0];
@@ -256,7 +262,7 @@ void publishImuMsg(void)
   
   imu_pub.publish(&imu_msg);
   
-//  tfs_msg.header.stamp   = nh.now();
+//  tfs_msg.header.stamp   = rosNow();
 //  tfs_msg.header.frame_id = "base_link";
 //  tfs_msg.child_frame_id = "imu_link";
 //  tfs_msg.transform.rotation.w = quat[0];
@@ -278,7 +284,7 @@ void publishDriveInformation(void)
   //int16_t encoder_l, encoder_r;
   
   prev_update_time = time_now;
-  ros::Time stamp_now = nh.now(); //rosNow();
+  ros::Time stamp_now = rosNow(); //rosNow();
   
   encoder_l = (int16_t)TIM_GetCounter(TIM3);
   encoder_r = - (int16_t)TIM_GetCounter(TIM4);
@@ -519,15 +525,16 @@ void motorControl(float linear_vel, float angular_vel)
   }
   
   //下发速度为零时，确保电机处于停止状态，防止机器人因为推动，出现自己动的情况 
-  if (linear_vel == 0 && angular_vel == 0)
-  {
-    //左轮停转
-    setMotorDirection(LEFT_MOTOR, STOP);
-    //右轮停转
-    setMotorDirection(RIGHT_MOTOR, STOP);
-    //输出清零
-    motor_output[LEFT] = motor_output[RIGHT] = 0;
-  }
+  //该部分加上会出现更换转的方向时，轮子会沿原来方向转一下，再往回转。
+//  if (linear_vel == 0 && angular_vel == 0)
+//  {
+//    //左轮停转
+//    setMotorDirection(LEFT_MOTOR, STOP);
+//    //右轮停转
+//    setMotorDirection(RIGHT_MOTOR, STOP);
+//    //输出清零
+//    motor_output[LEFT] = motor_output[RIGHT] = 0;
+//  }
 
   //电机输出限幅
   motor_output[LEFT] = constrain(motor_output[LEFT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
@@ -569,6 +576,40 @@ void sendLogMsg(void)
   }    
 }
 
+/*******************************************************************************
+* Update the base time for interpolation
+*******************************************************************************/
+void updateTime() 
+{
+  current_offset = micros();
+  current_time = nh.now();
+}
+
+/*******************************************************************************
+* ros::Time::now() implementation
+*******************************************************************************/
+ros::Time rosNow()
+{
+  return addMicros(current_time, micros() - current_offset);
+}
+
+/*******************************************************************************
+* Time Interpolation function
+*******************************************************************************/
+ros::Time addMicros(ros::Time & t, uint32_t _micros)
+{
+  uint32_t sec, nsec;
+
+  sec  = _micros / 1000000 + t.sec;
+  nsec = _micros % 1000000 + 1000 * (t.nsec / 1000);
+  
+  if (nsec >= 1e9) 
+  {
+    sec++, nsec--;
+  }
+  return ros::Time(sec, nsec);
+}
+
 //下面部分为TIM1中断服务函数，待后续探索其用途。2019/4/5 8.26
 
  uint32_t ms_cnt = 0;
@@ -585,13 +626,12 @@ void TIM1_UP_IRQHandler(void)
   {
     TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
 
-    ms_cnt++;
-    //  if(ms_cnt - rate_cnt[0] > 1000 / CMD_VEL_PUBLISH_FREQUENCY)
-    //  {
-    //    updateGoalVelocity();
-    //    motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
-    //    rate_cnt[0] = ms_cnt;
-    //  }
+//      ms_cnt++;
+//      if((ms_cnt - rate_cnt[0]) > (1000 / 200))
+//      {
+//        MPU_DMP_ReadData(gyro, accel, quat, rpy);
+//        rate_cnt[0] = ms_cnt;
+//      }
 
   }
 }
