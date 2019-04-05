@@ -40,13 +40,10 @@ namespace std_msgs
      return offset;
     }
 
-    virtual const char * getType(){ return "std_msgs/String"; };
-    virtual const char * getMD5(){ return "992ce8a1687cec8c8bd883ec73ca41d1"; };
+    const char * getType(){ return "std_msgs/String"; };
+    const char * getMD5(){ return "992ce8a1687cec8c8bd883ec73ca41d1"; };
 
   };
 
 }
 #endif
-
-
-

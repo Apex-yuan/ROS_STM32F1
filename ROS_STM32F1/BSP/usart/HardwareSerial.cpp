@@ -40,7 +40,7 @@ void HardwareSerial::begin(uint32_t baud)
 
   /* 配置嵌套向量中断控制器NVIC */ 
   NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;  //配置USART3为中断源
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=2; //抢占优先级2
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0; //抢占优先级2
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;  //子优先级0
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;  //IRQ通道使能
 	NVIC_Init(&NVIC_InitStructure);	 //根据指定的参数初始化NVIC寄存器

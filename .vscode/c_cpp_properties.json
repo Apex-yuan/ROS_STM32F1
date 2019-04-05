@@ -16,7 +16,9 @@
                 "${workspaceFolder}/ROS_STM32F1/BSP",
                 "${workspaceFolder}/ROS_STM32F1/BSP/encoder",
                 "${workspaceFolder}/ROS_STM32F1/BSP/mpu6050",
-                "${workspaceFolder}/ROS_STM32F1/BSP/mpu6050/dmp"
+                "${workspaceFolder}/ROS_STM32F1/BSP/mpu6050/dmp",
+                "${workspaceFolder}/ROS_STM32F1/BSP/tim",
+                "${workspaceFolder}/ROS_STM32F1/User"
             ],
             "defines": [
                 "USE_STDPERIPH_DRIVER",

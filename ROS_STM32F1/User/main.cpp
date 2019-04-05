@@ -1,6 +1,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdio.h>
+#include "bsp.h"
 #include "HardwareSerial.h"
 #include "config.h"
 
@@ -15,16 +16,6 @@
 #include <sensor_msgs/Imu.h>
 
 
-#include "systick.h"
-#include "led.h"
-#include "encoder.h"
-#include "i2c.h"
-#include "mpu6050.h"
-#include "inv_mpu.h"
-#include "inv_mpu_dmp_motion_driver.h"
-#include "motor.h"
-#include "stm32f10x.h"
-
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg);
 void ledCallback(const std_msgs::Empty& led_msg);
 
@@ -32,7 +23,7 @@ void initOdom(void);
 void initJointStates(void);
 
 void publishImuMsg(void);
-void publishDirveInformation(void);
+void publishDriveInformation(void);
 bool calcOdometry(double diff_time);
 void updateMotorInfo(int16_t left_tick, int16_t right_tick);
 void updateOdometry(void);
@@ -95,43 +86,30 @@ uint32_t prev_update_time;
 float odom_pose[3];
 float odom_vel[3];
 
-//PID
-float left_control_output, left_control_output_old;
-float right_control_output, right_control_output_old;
-float linear_control_output, linear_control_output_old;
-float linear_kp = -1000;
-float linear_ki = -800;
-float angular_control_output, angular_control_output_old;
-float angular_kp = 300;
-float angular_ki = 0;
-
+/*callback -----------------------------------------------------------*/
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg)
 {
   goal_velocity_from_cmd[LINEAR] = cmd_vel_msg.linear.x;
   goal_velocity_from_cmd[ANGULAR] = cmd_vel_msg.angular.z;
+
+  goal_velocity_from_cmd[LINEAR] = constrain(goal_velocity_from_cmd[LINEAR], MIN_LINEAR_VELOCITY, MAX_LINEAR_VELOCITY);
+  goal_velocity_from_cmd[ANGULAR] = constrain(goal_velocity_from_cmd[ANGULAR], MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
 }
 
 void ledCallback(const std_msgs::Empty& led_msg)
 {
-  GPIO_WriteBit(GPIOA, GPIO_Pin_8, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_8)));
+  GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13)));
 }
 
 
 
 int main()
 {
-  
-  
-	systick_init();	//滴答定时器初始化
-  Serial.begin(57600);
-  led_init();
-  MotorInit();
-  EncoderInit();
-  
-  while(MPU_DMP_Init()); //等待IMU初始化完成
- 
+  //NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+  bsp_init();
+  nh.getHardware()->setBaud(115200);
   nh.initNode();
-  //nh.getHardware()->setBaud(115200);
+  
 
   nh.loginfo("connected seccess!");
   nh.subscribe(cmd_vel_sub);
@@ -145,50 +123,49 @@ int main()
   
   initOdom();
   initJointStates();
-  
+  // TIM_Cmd(TIM1, ENABLE); //若使用TIM1须在此处使能  
   prev_update_time = millis();
   
   while(1)
   {
-    GPIO_SetBits(GPIOC, GPIO_Pin_13);
     t = millis();
-    if((t - tTime[0]) > (1000 / CMD_VEL_PUBLISH_FREQUENCY))
-    {
-      
-      updateGoalVelocity();
-      motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
-      tTime[0] = t;
-    }  
+   if((t - tTime[0]) > (1000 / CMD_VEL_PUBLISH_FREQUENCY))
+   {   
+     updateGoalVelocity();
+     motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
+     tTime[0] = t;
+   }  
     if((t - tTime[2]) > (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
     {
-      publishDirveInformation();  
+      publishDriveInformation();  
       tTime[2] = t;
     }    
-    if((t - tTime[3]) > (1000 / IMU_PUBLISH_FREQUENCY))
-    {
-      publishImuMsg();
-      tTime[3] = t;
-    }
-    if((t - tTime[4]) > (1000 / 4))
+   if((t - tTime[3]) > (1000 / IMU_PUBLISH_FREQUENCY))
+   {
+     publishImuMsg();
+     tTime[3] = t;
+   }
+    if((t - tTime[4]) > (1000 / 10))
     {
       if(nh.connected())
       {
-        GPIO_ResetBits(GPIOC, GPIO_Pin_13);
+        GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13))); //led brink
+      }
+      else
+      {
+        GPIO_SetBits(GPIOC, GPIO_Pin_13); //led off
       }
       tTime[4] = t;
     }
-    else
-      GPIO_SetBits(GPIOC, GPIO_Pin_13);
     
     // Send log message after ROS connection
     sendLogMsg();
 
+    //
     MPU_DMP_ReadData(gyro, accel, quat, rpy);
     
-
     nh.spinOnce();
-    
-    //delay_ms(10);
+    delay_ms(10);
   }
 }
 
@@ -279,22 +256,22 @@ void publishImuMsg(void)
   
   imu_pub.publish(&imu_msg);
   
-  tfs_msg.header.stamp   = nh.now();
-  tfs_msg.header.frame_id = "base_link";
-  tfs_msg.child_frame_id = "imu_link";
-  tfs_msg.transform.rotation.w = quat[0];
-  tfs_msg.transform.rotation.x = quat[1];
-  tfs_msg.transform.rotation.y = quat[2];
-  tfs_msg.transform.rotation.z = quat[3];
-  
-  tfs_msg.transform.translation.x = 0.0;
-  tfs_msg.transform.translation.y = 0.0;
-  tfs_msg.transform.translation.z = 0.068;
-  tf_broadcaster.sendTransform(tfs_msg);
+//  tfs_msg.header.stamp   = nh.now();
+//  tfs_msg.header.frame_id = "base_link";
+//  tfs_msg.child_frame_id = "imu_link";
+//  tfs_msg.transform.rotation.w = quat[0];
+//  tfs_msg.transform.rotation.x = quat[1];
+//  tfs_msg.transform.rotation.y = quat[2];
+//  tfs_msg.transform.rotation.z = quat[3];
+//  
+//  tfs_msg.transform.translation.x = 0.0;
+//  tfs_msg.transform.translation.y = 0.0;
+//  tfs_msg.transform.translation.z = 0.068;
+//  tf_broadcaster.sendTransform(tfs_msg);
 }
 
 int16_t encoder_l, encoder_r;
-void publishDirveInformation(void)
+void publishDriveInformation(void)
 {
   unsigned long time_now = millis();
   unsigned long step_time = time_now - prev_update_time;
@@ -457,17 +434,17 @@ void updateTF(geometry_msgs::TransformStamped& odom_tf)
 void updateGoalVelocity(void)
 {
   goal_velocity[LINEAR] = goal_velocity_from_cmd[LINEAR];
-  goal_velocity[ANGULAR] = goal_velocity_from_cmd[ANGULAR];  
+  goal_velocity[ANGULAR] = goal_velocity_from_cmd[ANGULAR];
 }
 
-float left_speed_control_integral;
-float right_speed_control_integral;
-
 //目前的PID计算函数还存在一些问题，后续修改。　2019/3/30
+//目前修改了左侧轮子的pid函数，待验证成功后在修改右侧轮子。2019/4/4
+//pid函数验证成功，已将右侧pid函数改为左侧样式，目前左右轮子因为 static float speed_control_integral 变量不能使用相同的PID函数，后续再优化 2019/4/5 8.32
 float leftPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
 {
   float delta_vel;
   float fP,fI;
+  float speed_control_output;
   static float speed_control_integral;
   
   delta_vel = goal_vel - real_vel;
@@ -475,16 +452,17 @@ float leftPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
   fP = delta_vel * kp;
   fI = delta_vel * ki;
   
-  left_speed_control_integral += fI;
+  speed_control_integral += fI;
   
-  left_control_output_old = left_control_output;
-  left_control_output = fP + left_speed_control_integral;
-  return left_control_output;
+  speed_control_output = fP + speed_control_integral;
+  return speed_control_output;
 }
+
 float rightPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
 {
   float delta_vel;
   float fP,fI;
+  float speed_control_output;
   static float speed_control_integral;
   
   delta_vel = goal_vel - real_vel;
@@ -492,111 +470,71 @@ float rightPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
   fP = delta_vel * kp;
   fI = delta_vel * ki;
   
-  right_speed_control_integral += fI;
-  
-  right_control_output_old = right_control_output;
-  right_control_output = fP + right_speed_control_integral;
-  return right_control_output;
-}
-
-void linearPIDCaculate(float goal_linear_vel)
-{
-  float delta_vel;
-  float fP,fI;
-  static float speed_control_integral;
-  
-  delta_vel = goal_linear_vel - odom_vel[0];//last_velocity[LEFT] * WHEEL_RADIUS;//odom_vel[0];
-   
-  fP = delta_vel * linear_kp;
-  fI = delta_vel * linear_ki;
-  
   speed_control_integral += fI;
   
-  linear_control_output_old = linear_control_output;
-  linear_control_output = fP + speed_control_integral;
+  speed_control_output = fP + speed_control_integral;
+  return speed_control_output;
 }
 
-void angularPIDCaculate(float goal_angular_vel)
-{
-  float delta_vel;
-  float fP,fI;
-  static float speed_control_integral;
-  
-  delta_vel = goal_angular_vel - odom_vel[2];
-   
-  fP = delta_vel * angular_kp;
-  fI = delta_vel * angular_ki;
-  
-  speed_control_integral += fI;
-  
-  angular_control_output_old = angular_control_output;
-  angular_control_output = fP + speed_control_integral;
-}
-float wheel_vel[WHEEL_NUM], wheel_vel_old[WHEEL_NUM];
-uint16_t motor_output[WHEEL_NUM];
+float motor_output[WHEEL_NUM];
 // left motor:  gpio : PB13,PB12   PWM: PA3
 // right motor: gpio : PB14,PB15   PWM: PA2
 void motorControl(float linear_vel, float angular_vel)
 {
-  //float wheel_vel[WHEEL_NUM];
-  //uint16_t motor_output[WHEEL_NUM];
-  float left_out, right_out;
+  float goal_vel[WHEEL_NUM], current_vel[WHEEL_NUM];
+  //float motor_output[WHEEL_NUM];
   
-  //linearPIDCaculate(linear_vel);
-  //angularPIDCaculate(angular_vel);
-  
-  wheel_vel[LEFT]  = linear_vel - (angular_vel * WHEEL_SEPARATION / 2);
-  wheel_vel[RIGHT] = linear_vel + (angular_vel * WHEEL_SEPARATION / 2);
+  //计算左右轮子目标速度值
+  goal_vel[LEFT]  = linear_vel - (angular_vel * WHEEL_SEPARATION / 2);
+  goal_vel[RIGHT] = linear_vel + (angular_vel * WHEEL_SEPARATION / 2);
 
-  wheel_vel_old[LEFT] = odom_vel[0] - (odom_vel[2] * WHEEL_SEPARATION / 2);
-  wheel_vel_old[RIGHT] = odom_vel[0] + (odom_vel[2] * WHEEL_SEPARATION / 2);  
+  //计算左右轮子当前速度值
+  current_vel[LEFT] = last_velocity[LEFT] * WHEEL_RADIUS;
+  current_vel[RIGHT] = last_velocity[RIGHT] * WHEEL_RADIUS;
   
-  //wheel_vel[LEFT] = linear_control_output - (angular_control_output * WHEEL_SEPARATION / 2);
-  //wheel_vel[RIGHT] = linear_control_output + (angular_control_output * WHEEL_SEPARATION / 2);
-  //wheel_vel[LEFT] = linear_control_output - (angular_vel * WHEEL_SEPARATION / 2 * 1000);
-  //wheel_vel[RIGHT] = linear_control_output + (angular_vel * WHEEL_SEPARATION / 2 * 1000);
+  //结合PID计算当前的电机输出
+  motor_output[LEFT] = leftPIDCaculate(goal_vel[LEFT], current_vel[LEFT], 1000, 800);
+  motor_output[RIGHT] = rightPIDCaculate(goal_vel[RIGHT], current_vel[RIGHT], 1000, 800);
   
-  //linearPIDCaculate(wheel_vel[LEFT]);
-  left_out = leftPIDCaculate(wheel_vel[LEFT], last_velocity[LEFT] * WHEEL_RADIUS, 1000, 800);
-  right_out = rightPIDCaculate(wheel_vel[RIGHT], last_velocity[RIGHT] * WHEEL_RADIUS, 1000, 800);
-  
-  
-//  if(wheel_vel[LEFT] == 0 && wheel_vel[RIGHT] == 0)
-//  {
-//    //左轮停转
-//    GPIO_ResetBits(GPIOB, GPIO_Pin_14);
-//    GPIO_ResetBits(GPIOB, GPIO_Pin_15);
-//    //右轮停转
-//    GPIO_ResetBits(GPIOB, GPIO_Pin_13);
-//    GPIO_ResetBits(GPIOB, GPIO_Pin_12);
-//    motor_output[LEFT] = motor_output[RIGHT] = 0;
-//  }
-  if(wheel_vel[LEFT] > 0)
+  if(motor_output[LEFT] > 0)
   {
-    GPIO_SetBits(GPIOB, GPIO_Pin_13);
-    GPIO_ResetBits(GPIOB, GPIO_Pin_12);
-    motor_output[LEFT] = (uint16_t)(left_out + 50);//(/*leftPIDCaculate(wheel_vel[LEFT],last_velocity[LEFT],1000,800)*/ 0);
+    setMotorDirection(LEFT_MOTOR, FRONT);
+    motor_output[LEFT] = motor_output[LEFT] + LEFT_MOTOR_OUT_DEAD_ZONE; // +
   }
   else
   {
-    GPIO_SetBits(GPIOB, GPIO_Pin_12);
-    GPIO_ResetBits(GPIOB, GPIO_Pin_13);
-    motor_output[LEFT] = (uint16_t)(- left_out - 50);//(/*(PIDCaculate(wheel_vel[LEFT],last_velocity[LEFT],1000,800))*/ 0);
+    setMotorDirection(LEFT_MOTOR, BACK);
+    motor_output[LEFT] = motor_output[LEFT] - LEFT_MOTOR_OUT_DEAD_ZONE; // +
   }
-  if(wheel_vel[RIGHT] > 0)
+
+  if(motor_output[RIGHT] > 0)
   {
-    GPIO_SetBits(GPIOB, GPIO_Pin_14);
-    GPIO_ResetBits(GPIOB, GPIO_Pin_15);
-    motor_output[RIGHT] = (uint16_t)(right_out + 50); //(rightPIDCaculate(wheel_vel[RIGHT],last_velocity[RIGHT],1000,800));
+    setMotorDirection(RIGHT_MOTOR, FRONT);
+    motor_output[RIGHT] = motor_output[RIGHT] + RIGHT_MOTOR_OUT_DEAD_ZONE; // +
   }
   else
   {
-    GPIO_SetBits(GPIOB, GPIO_Pin_15);
-    GPIO_ResetBits(GPIOB, GPIO_Pin_14);
-    motor_output[RIGHT] = (uint16_t)(- right_out - 50);//(/*PIDCaculate(wheel_vel[RIGHT],last_velocity[RIGHT],1000,800)*/ 0);
+    setMotorDirection(RIGHT_MOTOR, BACK);
+    motor_output[RIGHT] =  motor_output[RIGHT] - RIGHT_MOTOR_OUT_DEAD_ZONE; // +
   }
-  TIM_SetCompare4(TIM2, motor_output[LEFT]); // 左轮
-  TIM_SetCompare3(TIM2, motor_output[RIGHT]);  //右轮
+  
+  //下发速度为零时，确保电机处于停止状态，防止机器人因为推动，出现自己动的情况 
+  if (linear_vel == 0 && angular_vel == 0)
+  {
+    //左轮停转
+    setMotorDirection(LEFT_MOTOR, STOP);
+    //右轮停转
+    setMotorDirection(RIGHT_MOTOR, STOP);
+    //输出清零
+    motor_output[LEFT] = motor_output[RIGHT] = 0;
+  }
+
+  //电机输出限幅
+  motor_output[LEFT] = constrain(motor_output[LEFT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
+  motor_output[RIGHT] = constrain(motor_output[RIGHT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
+
+  setMotorPwm(LEFT_MOTOR, (uint16_t) abs(motor_output[LEFT]));
+  setMotorPwm(RIGHT_MOTOR, (uint16_t) abs(motor_output[RIGHT]));
 }
 
 //Send log message
@@ -630,3 +568,34 @@ void sendLogMsg(void)
     log_flag = false;
   }    
 }
+
+//下面部分为TIM1中断服务函数，待后续探索其用途。2019/4/5 8.26
+
+ uint32_t ms_cnt = 0;
+ uint32_t rate_cnt[10] = {0};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void TIM1_UP_IRQHandler(void)
+{
+//  static uint32_t ms_cnt = 0;
+//  static uint32_t rate_cnt[10] = {0};
+  if(TIM_GetFlagStatus(TIM1, TIM_IT_Update) != RESET)
+  {
+    TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
+
+    ms_cnt++;
+    //  if(ms_cnt - rate_cnt[0] > 1000 / CMD_VEL_PUBLISH_FREQUENCY)
+    //  {
+    //    updateGoalVelocity();
+    //    motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
+    //    rate_cnt[0] = ms_cnt;
+    //  }
+
+  }
+}
+#ifdef __cplusplus
+ }
+#endif
+ 

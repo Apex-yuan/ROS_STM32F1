@@ -103,8 +103,8 @@ namespace geometry_msgs
      return offset;
     }
 
-    virtual const char * getType(){ return "geometry_msgs/Vector3"; };
-    virtual const char * getMD5(){ return "4a842b65f413084dc2b10fb484ea7f17"; };
+    const char * getType(){ return "geometry_msgs/Vector3"; };
+    const char * getMD5(){ return "4a842b65f413084dc2b10fb484ea7f17"; };
 
   };
 

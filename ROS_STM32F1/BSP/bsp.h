@@ -7,8 +7,14 @@
    
 #include "stm32f10x.h"
 
+#include "systick.h"
+#include "mpu6050.h"
+#include "led.h"
+#include "motor.h"
+#include "encoder.h"
+#include "tim.h"
 
-
+void bsp_init(void);
 
 #ifdef __cplusplus
  }

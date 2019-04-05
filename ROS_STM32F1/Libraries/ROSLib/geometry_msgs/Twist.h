@@ -32,8 +32,8 @@ namespace geometry_msgs
      return offset;
     }
 
-    virtual const char * getType(){ return "geometry_msgs/Twist"; };
-    virtual const char * getMD5(){ return "9f195f881246fdfa2798d1d3eebca84a"; };
+    const char * getType(){ return "geometry_msgs/Twist"; };
+    const char * getMD5(){ return "9f195f881246fdfa2798d1d3eebca84a"; };
 
   };
 

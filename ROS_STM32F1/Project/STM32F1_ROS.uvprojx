@@ -338,7 +338,7 @@
               <MiscControls>--diag_suppress=1,1300</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\CMSIS;..\Libraries\STM32F10x_StdPeriph_Driver\inc;..\User;..\BSP\usart;..\BSP\tim;..\BSP\encoder;..\BSP\i2c;..\BSP\motor;..\BSP\mpu6050;..\Libraries\eMPL;..\Libraries\ROSLib;..\BSP\systick;..\BSP\led;..\BSP</IncludePath>
+              <IncludePath>..\Libraries\CMSIS;..\Libraries\STM32F10x_StdPeriph_Driver\inc;..\User;..\BSP\usart;..\BSP\encoder;..\BSP\i2c;..\BSP\motor;..\BSP\mpu6050;..\Libraries\eMPL;..\Libraries\ROSLib;..\BSP\systick;..\BSP\led;..\BSP;..\BSP\tim</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -543,9 +543,9 @@
           <GroupName>BSP</GroupName>
           <Files>
             <File>
-              <FileName>bsp.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\BSP\bsp.h</FilePath>
+              <FileName>bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\bsp.c</FilePath>
             </File>
             <File>
               <FileName>HardwareSerial.cpp</FileName>
@@ -581,6 +581,11 @@
               <FileName>motor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\BSP\motor\motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\tim\tim.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -633,9 +638,9 @@
           <GroupName>Doc</GroupName>
           <Files>
             <File>
-              <FileName>readme.txt</FileName>
+              <FileName>log.txt</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Doc\readme.txt</FilePath>
+              <FilePath>..\Doc\log.txt</FilePath>
             </File>
           </Files>
         </Group>
@@ -1178,9 +1183,9 @@
           <GroupName>BSP</GroupName>
           <Files>
             <File>
-              <FileName>bsp.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\BSP\bsp.h</FilePath>
+              <FileName>bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\bsp.c</FilePath>
             </File>
             <File>
               <FileName>HardwareSerial.cpp</FileName>
@@ -1216,6 +1221,11 @@
               <FileName>motor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\BSP\motor\motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\tim\tim.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1268,9 +1278,9 @@
           <GroupName>Doc</GroupName>
           <Files>
             <File>
-              <FileName>readme.txt</FileName>
+              <FileName>log.txt</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Doc\readme.txt</FilePath>
+              <FilePath>..\Doc\log.txt</FilePath>
             </File>
           </Files>
         </Group>

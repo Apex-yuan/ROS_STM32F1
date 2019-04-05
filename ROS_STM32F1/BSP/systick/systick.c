@@ -8,15 +8,15 @@ volatile uint32_t _counter;
 
 void systick_init(void) 
 {
-  NVIC_InitTypeDef NVIC_InitStructure;
+//  NVIC_InitTypeDef NVIC_InitStructure;
  
   _counter = 0;  
-  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-  NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
+//  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+//  NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+//  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+//  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+//  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+//  NVIC_Init(&NVIC_InitStructure);
   
 	SysTick_Config(SystemCoreClock / 1000);
 }
