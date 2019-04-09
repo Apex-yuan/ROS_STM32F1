@@ -1,6 +1,7 @@
 #pragma once
 #include "hardwareserial.h"
 #include "systick.h"
+#include "hw_config.h"
 
 #define SERIAL_CLASS  HardwareSerial
 
@@ -31,16 +32,30 @@ class STM32Hardware {
     }
 
     int read(){
-      if(iostream->available()){
-	  	return iostream->read();
-      }else{
-	    return -1;
+      //USART
+//      if(iostream->available()){
+//	  	return iostream->read();
+//      }else{
+//	    return -1;
+//      }
+      //USB virtual com port
+      if(usb_vcp_available())
+      {
+        return usb_vcp_read();
       }
+      else
+      {
+        return -1;
+      }
+      
     };
 
     void write(uint8_t* data, int length){
       for(int i=0; i<length; i++){
-		  iostream->write(data[i]);
+        //USART
+		    //iostream->write(data[i]);
+        //USB virtual com port
+        txBufferToUsbSendData(data[i]);
       }
     }
 
