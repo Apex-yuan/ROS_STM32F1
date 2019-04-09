@@ -1,4 +1,5 @@
 #include "HardwareSerial.h"
+#include "hw_config.h"
 
 HardwareSerial Serial;
 
@@ -53,7 +54,8 @@ void HardwareSerial::begin(uint32_t baud)
 
 int HardwareSerial::available(void)
 {
-  return ((uint32_t)(SERIAL_RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail)) % SERIAL_RX_BUFFER_SIZE;
+  //return ((uint32_t)(SERIAL_RX_BUFFER_SIZE + _rx_buffer_head - _rx_buffer_tail)) % SERIAL_RX_BUFFER_SIZE;
+  return usb_vcp_available();
 }
 
 //int HardwareSerial::peek(void)
@@ -70,20 +72,23 @@ int HardwareSerial::available(void)
 
 int HardwareSerial::read(void)
 {
-  // if the head isn't ahead of the tail, we don't have any characters
-  if (_rx_buffer_head == _rx_buffer_tail) {
-    return -1;
-  } else {
-    unsigned char c = _rx_buffer[_rx_buffer_tail];
-    _rx_buffer_tail = (uint16_t)(_rx_buffer_tail + 1) % SERIAL_RX_BUFFER_SIZE;
-    return c;
-  }
+//  // if the head isn't ahead of the tail, we don't have any characters
+//  if (_rx_buffer_head == _rx_buffer_tail) {
+//    return -1;
+//  } else {
+//    unsigned char c = _rx_buffer[_rx_buffer_tail];
+//    _rx_buffer_tail = (uint16_t)(_rx_buffer_tail + 1) % SERIAL_RX_BUFFER_SIZE;
+//    return c;
+//  }
+  return usb_vcp_read();
 }
 
 uint32_t HardwareSerial::write(uint8_t c)
 {
-  USART_SendData(USART3, c);
-  while(USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET);
+//  USART_SendData(USART3, c);
+//  while(USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET);
+//  return 1;
+  txBufferToUsbSendData(c);
   return 1;
 }
 
