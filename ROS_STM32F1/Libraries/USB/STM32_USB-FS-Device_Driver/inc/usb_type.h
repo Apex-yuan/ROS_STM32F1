@@ -43,7 +43,7 @@ typedef enum
 {
   FALSE = 0, TRUE  = !FALSE
 }
-bool;
+USB_Bool;
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */

@@ -30,6 +30,10 @@
 #ifndef __HW_CONFIG_H
 #define __HW_CONFIG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+  
 /* Includes ------------------------------------------------------------------*/
 #include "platform_config.h"
 #include "usb_type.h"
@@ -44,6 +48,32 @@
 #define LED_OFF               0xFF
 
 #define USART_RX_DATA_SIZE   2048
+/*add by Apex-yuan*/
+#define USB_USART_TXFIFO_SIZE   1024	//USB虚拟串口发送FIFO大小		
+#define USB_USART_REC_LEN	 	200		//USB串口接收缓冲区最大字节数
+
+//定义一个USB USART FIFO结构体
+typedef struct  
+{										    
+	u8  buffer[USB_USART_TXFIFO_SIZE];	//buffer
+	vu16 writeptr;						//写指针
+	vu16 readptr;						//读指针
+}_usb_usart_fifo; 
+extern _usb_usart_fifo uu_txfifo;		//USB串口发送FIFO
+
+
+#define USB_TX_BUFFER_SIZE 1024
+#define USB_RX_BUFFER_SIZE 1024
+
+extern uint8_t  _usb_tx_buffer[USB_TX_BUFFER_SIZE];
+extern uint16_t _usb_tx_buffer_head;
+extern uint16_t _usb_tx_buffer_tail;
+
+extern uint8_t  _usb_rx_buffer[USB_RX_BUFFER_SIZE];
+extern uint16_t _usb_rx_buffer_head;
+extern uint16_t _usb_rx_buffer_tail;
+/*end*/
+
 /* Exported functions ------------------------------------------------------- */
 void Set_System(void);
 void Set_USBClock(void);
@@ -52,11 +82,24 @@ void Leave_LowPowerMode(void);
 void USB_Interrupts_Config(void);
 void USB_Cable_Config (FunctionalState NewState);
 void USART_Config_Default(void);
-bool USART_Config(void);
+USB_Bool USART_Config(void);
 void USB_To_USART_Send_Data(uint8_t* data_buffer, uint8_t Nb_bytes);
 void USART_To_USB_Send_Data(void);
 void Handle_USBAsynchXfer (void);
 void Get_SerialNum(void);
+
+void usbToRxBufferSendData(uint8_t* data_buffer,  uint8_t Nb_bytes);
+void txBufferToUsbSendData(uint8_t data);
+void usb_printf(char* fmt,...);
+void USB_Port_Set(uint8_t enable);
+void USB_USART_SendData(u8 data);
+
+int usb_vcp_available(void);
+int usb_vcp_read(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 /* External variables --------------------------------------------------------*/
 
