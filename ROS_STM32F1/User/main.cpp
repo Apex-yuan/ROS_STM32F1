@@ -62,7 +62,7 @@ tf::TransformBroadcaster tf_broadcaster;
 ros::Subscriber<geometry_msgs::Twist> cmd_vel_sub("cmd_vel",commandVelocityCallback);
 ros::Subscriber<std_msgs::Empty > led_sub("toggle_led", ledCallback);
 
-uint32_t t;
+//uint32_t t;
 static uint32_t tTime[10];
 float goal_velocity[WHEEL_NUM] = {0.0, 0.0};
 float goal_velocity_from_cmd[WHEEL_NUM] = {0.0, 0.0};
@@ -131,27 +131,34 @@ int main()
 
   prev_update_time = millis();
   
+//  while(1)
+//  {
+//    nh.loginfo("connected seccess!\n");
+//    //usb_printf("nihao\n");
+//    delay_ms(200);
+//  }
+  
   while(1)
   {
-    t = millis();
+   uint32_t t = millis();
     updateTime();
-   if((t - tTime[0]) > (1000 / CMD_VEL_PUBLISH_FREQUENCY))
+   if((t - tTime[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
    {   
      updateGoalVelocity();
      motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
      tTime[0] = t;
    }  
-    if((t - tTime[2]) > (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
+    if((t - tTime[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
     {
       publishDriveInformation();  
       tTime[2] = t;
     }    
-   if((t - tTime[3]) >  (1000 / IMU_PUBLISH_FREQUENCY))
+   if((t - tTime[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
    {
      publishImuMsg();
      tTime[3] = t;
    }
-    if((t - tTime[4]) > (1000 / 1000))
+    if((t - tTime[4]) >= 10)
     {
       if(nh.connected())
       {
@@ -171,7 +178,7 @@ int main()
     MPU_DMP_ReadData(gyro, accel, quat, rpy);
     
     nh.spinOnce();
-    delay_ms(10);
+    //delay_ms(10);
   }
 }
 
@@ -581,7 +588,7 @@ void sendLogMsg(void)
 *******************************************************************************/
 void updateTime() 
 {
-  current_offset = micros();
+  current_offset = millis();//micros();
   current_time = nh.now();
 }
 
@@ -601,12 +608,12 @@ ros::Time addMicros(ros::Time & t, uint32_t _micros)
   uint32_t sec, nsec;
 
   sec  = _micros / 1000000 + t.sec;
-  nsec = _micros % 1000000 + 1000 * (t.nsec / 1000);
+  nsec = _micros % 1000000000 + t.nsec; //_micros % 1000000 + 1000 * (t.nsec / 1000);
   
-  if (nsec >= 1e9) 
-  {
-    sec++, nsec--;
-  }
+//  if (nsec >= 1e9) 
+//  {
+//    sec++, nsec--;
+//  }
   return ros::Time(sec, nsec);
 }
 

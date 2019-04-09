@@ -7,7 +7,7 @@
 
 #define CMD_VEL_PUBLISH_FREQUENCY  30 //hz
 #define DRIVE_INFORMATION_PUBLISH_FREQUENCY  30 //hz
-#define IMU_PUBLISH_FREQUENCY                200 //hz
+#define IMU_PUBLISH_FREQUENCY                50 //hz
 
 //机器人底盘信息   
 #define WHEEL_NUM  2   
