@@ -23,5 +23,5 @@ void bsp_init(void)
   TIM1_TIMER_Init(999, 71); //暂时没用到
   motorInit();
   EncoderInit();
-  while(MPU_DMP_Init()); //等待IMU初始化完成
+  //while(MPU_DMP_Init()); //等待IMU初始化完成
 }
