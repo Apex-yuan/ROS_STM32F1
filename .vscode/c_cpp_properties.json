@@ -18,7 +18,10 @@
                 "${workspaceFolder}/ROS_STM32F1/BSP/mpu6050",
                 "${workspaceFolder}/ROS_STM32F1/BSP/mpu6050/dmp",
                 "${workspaceFolder}/ROS_STM32F1/BSP/tim",
-                "${workspaceFolder}/ROS_STM32F1/User"
+                "${workspaceFolder}/ROS_STM32F1/User",
+                "${workspaceFolder}/ROS_STM32F1/Libraries/USB/Virtual_COM_Port/inc",
+                "${workspaceFolder}/ROS_STM32F1/Libraries/USB/STM32_USB-FS-Device_Driver/inc",
+                "${workspaceFolder}/ROS_STM32F1/BSP/USBSerial"
             ],
             "defines": [
                 "USE_STDPERIPH_DRIVER",

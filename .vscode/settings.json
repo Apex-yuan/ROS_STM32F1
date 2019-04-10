@@ -1,5 +1,8 @@
 {
     "C_Cpp.errorSquiggles": "Disabled",
     "files.encoding": "gb2312",
-    "editor.foldingStrategy": "indentation" /*左侧显示代码折叠+-按钮*/
+    "editor.foldingStrategy": "indentation",
+    "files.associations": {
+        "hw_config.h": "c"
+    } /*左侧显示代码折叠+-按钮*/
 }

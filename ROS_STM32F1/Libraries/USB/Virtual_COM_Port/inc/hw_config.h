@@ -32,7 +32,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif /*__cplusplus*/
   
 /* Includes ------------------------------------------------------------------*/
 #include "platform_config.h"
@@ -42,64 +42,43 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported define -----------------------------------------------------------*/
-#define MASS_MEMORY_START     0x04002000
-#define BULK_MAX_PACKET_SIZE  0x00000040
-#define LED_ON                0xF0
-#define LED_OFF               0xFF
+//#define MASS_MEMORY_START     0x04002000
+//#define BULK_MAX_PACKET_SIZE  0x00000040
+// #define LED_ON                0xF0
+// #define LED_OFF               0xFF
 
-#define USART_RX_DATA_SIZE   2048
-/*add by Apex-yuan*/
-#define USB_USART_TXFIFO_SIZE   1024	//USB虚拟串口发送FIFO大小		
-#define USB_USART_REC_LEN	 	200		//USB串口接收缓冲区最大字节数
-
-//定义一个USB USART FIFO结构体
-typedef struct  
-{										    
-	u8  buffer[USB_USART_TXFIFO_SIZE];	//buffer
-	vu16 writeptr;						//写指针
-	vu16 readptr;						//读指针
-}_usb_usart_fifo; 
-extern _usb_usart_fifo uu_txfifo;		//USB串口发送FIFO
-
-
-#define USB_TX_BUFFER_SIZE 1024
-#define USB_RX_BUFFER_SIZE 1024
+#define USB_TX_BUFFER_SIZE (1024*2)
+#define USB_RX_BUFFER_SIZE (1024*2)
 
 extern uint8_t  _usb_tx_buffer[USB_TX_BUFFER_SIZE];
+extern uint16_t _usb_tx_buffer_length;
 extern uint16_t _usb_tx_buffer_head;
 extern uint16_t _usb_tx_buffer_tail;
 
 extern uint8_t  _usb_rx_buffer[USB_RX_BUFFER_SIZE];
 extern uint16_t _usb_rx_buffer_head;
 extern uint16_t _usb_rx_buffer_tail;
-/*end*/
 
 /* Exported functions ------------------------------------------------------- */
-void Set_System(void);
 void Set_USBClock(void);
 void Enter_LowPowerMode(void);
 void Leave_LowPowerMode(void);
 void USB_Interrupts_Config(void);
 void USB_Cable_Config (FunctionalState NewState);
-void USART_Config_Default(void);
-USB_Bool USART_Config(void);
-void USB_To_USART_Send_Data(uint8_t* data_buffer, uint8_t Nb_bytes);
-void USART_To_USB_Send_Data(void);
+void USB_To_Buffer_Send_Data(uint8_t* data_buffer, uint8_t Nb_bytes);
+void Buffer_To_USB_Send_Data(uint8_t data);
 void Handle_USBAsynchXfer (void);
 void Get_SerialNum(void);
+void USB_Connection_Config(FunctionalState NewState);
 
-void usbToRxBufferSendData(uint8_t* data_buffer,  uint8_t Nb_bytes);
-void txBufferToUsbSendData(uint8_t data);
 void usb_printf(char* fmt,...);
-void USB_Port_Set(uint8_t enable);
-void USB_USART_SendData(u8 data);
-
 int usb_vcp_available(void);
 int usb_vcp_read(void);
+void  usb_vcp_write(uint8_t data);
 
 #ifdef __cplusplus
 }
-#endif
+#endif /* __cplusplus */
 
 /* External variables --------------------------------------------------------*/
 

@@ -115,16 +115,14 @@ int main()
   nh.getHardware()->setBaud(115200);
   nh.initNode();
   
-
-  nh.loginfo("connected seccess!");
   nh.subscribe(cmd_vel_sub);
 //  nh.subscribe(led_sub);
 
   nh.advertise(imu_pub);
-//  nh.advertise(odom_pub);
-//  nh.advertise(joint_states_pub);
-//  
-//  tf_broadcaster.init(nh);
+  nh.advertise(odom_pub);
+  nh.advertise(joint_states_pub);
+  
+  tf_broadcaster.init(nh);
   
   initOdom();
   initJointStates();
@@ -142,7 +140,7 @@ int main()
   while(1)
   {
    uint32_t t = millis();
-    //updateTime();
+    updateTime();
    if((t - tTime[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
    {   
      updateGoalVelocity();
@@ -151,7 +149,9 @@ int main()
    }  
     if((t - tTime[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
     {
-     // publishDriveInformation();  
+      publishDriveInformation();  
+      //odom.header.stamp = nh.now();
+      //odom_pub.publish(&odom);
       tTime[2] = t;
     }    
    if((t - tTime[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
@@ -159,7 +159,7 @@ int main()
      publishImuMsg();
      tTime[3] = t;
    }
-    if((t - tTime[4]) >= 10)
+   if((t - tTime[4]) >= 1000 / LED_BRINK_FERQUENCE)
     {
       if(nh.connected())
       {
@@ -176,7 +176,7 @@ int main()
     sendLogMsg();
 
     //
-    //MPU_DMP_ReadData(gyro, accel, quat, rpy);
+    MPU_DMP_ReadData(gyro, accel, quat, rpy);
     
     nh.spinOnce();
     //delay_ms(10);
@@ -301,20 +301,20 @@ void publishDriveInformation(void)
   
   calcOdometry((double)(step_time * 0.001));
   
-  //odometry
-  updateOdometry();
-  odom.header.stamp = stamp_now;
-  odom_pub.publish(&odom);
+   //odometry
+   updateOdometry();
+   odom.header.stamp = stamp_now;
+   odom_pub.publish(&odom);
   
-  //tf
-  updateTF(odom_tf);
-  odom_tf.header.stamp = stamp_now;
-  tf_broadcaster.sendTransform(odom_tf);
-  
-  //joint states
-  updateJointStates();
-  joint_states.header.stamp = stamp_now;
-  joint_states_pub.publish(&joint_states);
+ //tf
+ updateTF(odom_tf);
+ odom_tf.header.stamp = stamp_now;
+ tf_broadcaster.sendTransform(odom_tf);
+ 
+ //joint states
+ updateJointStates();
+ joint_states.header.stamp = stamp_now;
+ joint_states_pub.publish(&joint_states);
 }
 
 /*******************************************************************************
@@ -589,7 +589,7 @@ void sendLogMsg(void)
 *******************************************************************************/
 void updateTime() 
 {
-  current_offset = millis();//micros();
+  current_offset = micros();
   current_time = nh.now();
 }
 
@@ -609,12 +609,12 @@ ros::Time addMicros(ros::Time & t, uint32_t _micros)
   uint32_t sec, nsec;
 
   sec  = _micros / 1000000 + t.sec;
-  nsec = _micros % 1000000000 + t.nsec; //_micros % 1000000 + 1000 * (t.nsec / 1000);
+  nsec = _micros % 1000000 + 1000 * (t.nsec / 1000);
   
-//  if (nsec >= 1e9) 
-//  {
-//    sec++, nsec--;
-//  }
+  if (nsec >= 1e9) 
+  {
+    sec++, nsec--;
+  }
   return ros::Time(sec, nsec);
 }
 

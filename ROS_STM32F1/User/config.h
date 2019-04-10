@@ -5,9 +5,10 @@
  extern "C" {
 #endif
 
-#define CMD_VEL_PUBLISH_FREQUENCY  30 //hz
-#define DRIVE_INFORMATION_PUBLISH_FREQUENCY  30 //hz
-#define IMU_PUBLISH_FREQUENCY                50 //hz
+#define LED_BRINK_FERQUENCE                  20 //hz 
+#define CMD_VEL_PUBLISH_FREQUENCY            30 //hz
+#define DRIVE_INFORMATION_PUBLISH_FREQUENCY  50 //hz
+#define IMU_PUBLISH_FREQUENCY                150 //hz
 
 //机器人底盘信息   
 #define WHEEL_NUM  2   

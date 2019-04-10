@@ -338,7 +338,7 @@
               <MiscControls>--diag_suppress=1,1300</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\CMSIS;..\Libraries\STM32F10x_StdPeriph_Driver\inc;..\User;..\BSP\usart;..\BSP\encoder;..\BSP\i2c;..\BSP\motor;..\BSP\mpu6050;..\Libraries\eMPL;..\Libraries\ROSLib;..\BSP\systick;..\BSP\led;..\BSP;..\BSP\tim;..\Libraries\USB\STM32_USB-FS-Device_Driver\inc;..\Libraries\USB\Virtual_COM_Port\inc</IncludePath>
+              <IncludePath>..\Libraries\CMSIS;..\Libraries\STM32F10x_StdPeriph_Driver\inc;..\User;..\BSP\usart;..\BSP\encoder;..\BSP\i2c;..\BSP\motor;..\BSP\mpu6050;..\Libraries\eMPL;..\Libraries\ROSLib;..\BSP\systick;..\BSP\led;..\BSP;..\BSP\tim;..\Libraries\USB\STM32_USB-FS-Device_Driver\inc;..\Libraries\USB\Virtual_COM_Port\inc;..\BSP\USBSerial</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -623,11 +623,6 @@
               <FilePath>..\BSP\bsp.c</FilePath>
             </File>
             <File>
-              <FileName>HardwareSerial.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\BSP\usart\HardwareSerial.cpp</FilePath>
-            </File>
-            <File>
               <FileName>systick.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\BSP\systick\systick.c</FilePath>
@@ -661,6 +656,16 @@
               <FileName>tim.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\BSP\tim\tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>USBSeial.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\BSP\USBSerial\USBSeial.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>HardwareSerial.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\BSP\usart\HardwareSerial.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1338,11 +1343,6 @@
               <FilePath>..\BSP\bsp.c</FilePath>
             </File>
             <File>
-              <FileName>HardwareSerial.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\BSP\usart\HardwareSerial.cpp</FilePath>
-            </File>
-            <File>
               <FileName>systick.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\BSP\systick\systick.c</FilePath>
@@ -1376,6 +1376,16 @@
               <FileName>tim.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\BSP\tim\tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>USBSeial.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\BSP\USBSerial\USBSeial.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>HardwareSerial.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\BSP\usart\HardwareSerial.cpp</FilePath>
             </File>
           </Files>
         </Group>
