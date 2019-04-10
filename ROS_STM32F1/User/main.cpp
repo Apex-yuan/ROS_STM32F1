@@ -118,13 +118,13 @@ int main()
 
   nh.loginfo("connected seccess!");
   nh.subscribe(cmd_vel_sub);
-  nh.subscribe(led_sub);
+//  nh.subscribe(led_sub);
 
   nh.advertise(imu_pub);
-  nh.advertise(odom_pub);
-  nh.advertise(joint_states_pub);
-  
-  tf_broadcaster.init(nh);
+//  nh.advertise(odom_pub);
+//  nh.advertise(joint_states_pub);
+//  
+//  tf_broadcaster.init(nh);
   
   initOdom();
   initJointStates();
@@ -133,7 +133,8 @@ int main()
   
 //  while(1)
 //  {
-//    nh.loginfo("connected seccess!\n");
+//    //Serial.write('\n');
+//    nh.loginfo("connected seccess!");
 //    //usb_printf("nihao\n");
 //    delay_ms(200);
 //  }
@@ -141,7 +142,7 @@ int main()
   while(1)
   {
    uint32_t t = millis();
-    updateTime();
+    //updateTime();
    if((t - tTime[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
    {   
      updateGoalVelocity();
@@ -150,7 +151,7 @@ int main()
    }  
     if((t - tTime[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
     {
-      publishDriveInformation();  
+     // publishDriveInformation();  
       tTime[2] = t;
     }    
    if((t - tTime[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
@@ -175,7 +176,7 @@ int main()
     sendLogMsg();
 
     //
-    MPU_DMP_ReadData(gyro, accel, quat, rpy);
+    //MPU_DMP_ReadData(gyro, accel, quat, rpy);
     
     nh.spinOnce();
     //delay_ms(10);
