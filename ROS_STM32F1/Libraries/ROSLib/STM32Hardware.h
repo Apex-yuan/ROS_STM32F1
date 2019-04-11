@@ -1,12 +1,17 @@
 #pragma once
 #include "USBSerial.h"
-#include "HardwareSerial.h"
+#include "USARTSerial.h"
 #include "systick.h"
-#include "hw_config.h"
 
-//use USB virtual com port
-#define SERIAL_CLASS  USBSerial //HardwareSerial //USBSerial
+#define USE_USB_SERIAL
 
+#if defined(USE_USB_SERIAL) //use usb serial
+ #define SERIAL_CLASS  USBSerial //HardwareSerial //USBSerial
+ #define Serial Serial0
+#elif //use usart serial
+ #define SERIAL_CLASS USARTSerial
+ #define Serial Serial3
+#endif /* USE_USB_SERIAL*/
 class STM32Hardware {
   public:
   	STM32Hardware(SERIAL_CLASS* io , long baud= 57600){
@@ -15,7 +20,7 @@ class STM32Hardware {
     }
     STM32Hardware()
     {
-      iostream = &Serial0;
+      iostream = &Serial;
       baud_ = 57600;
     }
     STM32Hardware(STM32Hardware& h){

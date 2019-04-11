@@ -338,7 +338,7 @@
               <MiscControls>--diag_suppress=1,1300</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\CMSIS;..\Libraries\STM32F10x_StdPeriph_Driver\inc;..\User;..\BSP\usart;..\BSP\encoder;..\BSP\i2c;..\BSP\motor;..\BSP\mpu6050;..\Libraries\eMPL;..\Libraries\ROSLib;..\BSP\systick;..\BSP\led;..\BSP;..\BSP\tim;..\Libraries\USB\STM32_USB-FS-Device_Driver\inc;..\Libraries\USB\Virtual_COM_Port\inc;..\BSP\USBSerial</IncludePath>
+              <IncludePath>..\Libraries\CMSIS;..\Libraries\STM32F10x_StdPeriph_Driver\inc;..\User;..\BSP\usart;..\BSP\encoder;..\BSP\i2c;..\BSP\motor;..\BSP\mpu6050;..\Libraries\eMPL;..\Libraries\ROSLib;..\BSP\systick;..\BSP\led;..\BSP;..\BSP\tim;..\Libraries\USB\STM32_USB-FS-Device_Driver\inc;..\Libraries\USB\Virtual_COM_Port\inc;..\BSP\USBSerial;..\BSP\USARTSerial</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -663,9 +663,9 @@
               <FilePath>..\BSP\USBSerial\USBSeial.cpp</FilePath>
             </File>
             <File>
-              <FileName>HardwareSerial.cpp</FileName>
+              <FileName>USARTSerial.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\BSP\usart\HardwareSerial.cpp</FilePath>
+              <FilePath>..\BSP\USARTSerial\USARTSerial.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1383,9 +1383,9 @@
               <FilePath>..\BSP\USBSerial\USBSeial.cpp</FilePath>
             </File>
             <File>
-              <FileName>HardwareSerial.cpp</FileName>
+              <FileName>USARTSerial.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>..\BSP\usart\HardwareSerial.cpp</FilePath>
+              <FilePath>..\BSP\USARTSerial\USARTSerial.cpp</FilePath>
             </File>
           </Files>
         </Group>

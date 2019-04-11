@@ -1,41 +1,11 @@
 
 /* Includes ------------------------------------------------------------------*/
+#include "main.h"
 #include <stdio.h>
 #include "bsp.h"
-#include "HardwareSerial.h"
+//#include "HardwareSerial.h"
 #include "config.h"
 
-#include <ros.h>
-#include <ros/time.h>
-#include <geometry_msgs/Twist.h>
-#include <tf/tf.h>
-#include <tf/transform_broadcaster.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/JointState.h>
-#include <std_msgs/Empty.h>
-#include <sensor_msgs/Imu.h>
-
-ros::Time addMicros(ros::Time & t, uint32_t _micros);
-void updateTime(); 
-ros::Time rosNow();
-
-void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg);
-void ledCallback(const std_msgs::Empty& led_msg);
-
-void initOdom(void);
-void initJointStates(void);
-
-void publishImuMsg(void);
-void publishDriveInformation(void);
-bool calcOdometry(double diff_time);
-void updateMotorInfo(int16_t left_tick, int16_t right_tick);
-void updateOdometry(void);
-void updateJointStates(void);
-void updateTF(geometry_msgs::TransformStamped& odom_tf);
-void updateGoalVelocity(void);
-void motorControl(float linear_vel, float angular);
-
-void sendLogMsg(void);
 
 /* ROS NodeHandle ------------------------------------------------------------------*/
 ros::NodeHandle nh;
@@ -53,6 +23,9 @@ ros::Publisher joint_states_pub("joint_states",&joint_states);
 sensor_msgs::Imu imu_msg;
 ros::Publisher imu_pub("imu", &imu_msg);
 
+std_msgs::UInt16MultiArray sonar_msg;
+ros::Publisher sonar_pub("sonar", &sonar_msg );
+
 /* Tranceform Broadcaster ----------------------------------------------------------*/
 geometry_msgs::TransformStamped tfs_msg;
 geometry_msgs::TransformStamped odom_tf;
@@ -60,9 +33,8 @@ tf::TransformBroadcaster tf_broadcaster;
 
 /* Suberscriber ------------------------------------------------------------------*/
 ros::Subscriber<geometry_msgs::Twist> cmd_vel_sub("cmd_vel",commandVelocityCallback);
-ros::Subscriber<std_msgs::Empty > led_sub("toggle_led", ledCallback);
+// ros::Subscriber<std_msgs::Empty > led_sub("toggle_led", ledCallback);
 
-//uint32_t t;
 static uint32_t tTime[10];
 float goal_velocity[WHEEL_NUM] = {0.0, 0.0};
 float goal_velocity_from_cmd[WHEEL_NUM] = {0.0, 0.0};
@@ -101,12 +73,22 @@ void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg)
   goal_velocity_from_cmd[ANGULAR] = constrain(goal_velocity_from_cmd[ANGULAR], MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
 }
 
-void ledCallback(const std_msgs::Empty& led_msg)
-{
-  GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13)));
-}
+// void ledCallback(const std_msgs::Empty& led_msg)
+// {
+//   //GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13)));
+// }
 
+uint16_t sonarArry[10] = {1,2,3,4};
 
+geometry_msgs::TransformStamped tt;
+tf::TransformBroadcaster broadcaster;
+
+double x = 1.0;
+double y = 0.0;
+double theta = 1.57;
+
+char base_link[] = "/base_link";
+char odometry[] = "/odom";
 
 int main()
 {
@@ -121,65 +103,93 @@ int main()
   nh.advertise(imu_pub);
   nh.advertise(odom_pub);
   nh.advertise(joint_states_pub);
-  
+  nh.advertise(sonar_pub);
+
   tf_broadcaster.init(nh);
+  
+  broadcaster.init(nh);
   
   initOdom();
   initJointStates();
-
+  //initSonar();
+  TIM_Cmd(TIM1, ENABLE);
   prev_update_time = millis();
-  
-//  while(1)
-//  {
-//    //Serial.write('\n');
-//    nh.loginfo("connected seccess!");
-//    //usb_printf("nihao\n");
-//    delay_ms(200);
-//  }
   
   while(1)
   {
-   uint32_t t = millis();
-    updateTime();
-   if((t - tTime[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
-   {   
-     updateGoalVelocity();
-     motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
-     tTime[0] = t;
-   }  
-    if((t - tTime[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
-    {
-      publishDriveInformation();  
-      //odom.header.stamp = nh.now();
-      //odom_pub.publish(&odom);
-      tTime[2] = t;
-    }    
-   if((t - tTime[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
-   {
-     publishImuMsg();
-     tTime[3] = t;
-   }
-   if((t - tTime[4]) >= 1000 / LED_BRINK_FERQUENCE)
-    {
-      if(nh.connected())
-      {
-        GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13))); //led brink
-      }
-      else
-      {
-        GPIO_SetBits(GPIOC, GPIO_Pin_13); //led off
-      }
-      tTime[4] = t;
-    }
-    
-    // Send log message after ROS connection
-    sendLogMsg();
+//   uint32_t t = millis();
+//    updateTime();
+//   if((t - tTime[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
+//   {   
+//     updateGoalVelocity();
+//     motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
+//     tTime[0] = t;
+//   }  
+//    if((t - tTime[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
+//    {
+//     // publishDriveInformation();
+//      tTime[2] = t;
+//    }    
+//   if((t - tTime[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
+//   {
+//     publishImuMsg();
+//     tTime[3] = t;
+//   }
+//   if((t - tTime[4]) >= 1000 / LED_BRINK_FERQUENCE)
+//    {
+//      if(nh.connected())
+//      {
+//        GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13))); //led brink
+//      }
+//      else
+//      {
+//        GPIO_SetBits(GPIOC, GPIO_Pin_13); //led off
+//      }
+//      tTime[4] = t;
+//    }
+//   if(t - tTime[5] >= 1000 / 2)
+//   {
+////     sonar_msg.layout.data_offset = 0;
+////     sonar_msg.data_length = 10;
+////     //sonarArry[t%10] = t % 4096;
+////     sonar_msg.data = sonarArry;
+////     sonar_pub.publish(&sonar_msg);
+////     tTime[5] = t;
+//   }
+//    
+//    // Send log message after ROS connection
+//    sendLogMsg();
 
-    //
-    MPU_DMP_ReadData(gyro, accel, quat, rpy);
+//    //
+//    //MPU_DMP_ReadData(gyro, accel, quat, rpy);
+//    
+//    nh.spinOnce();
+//    //delay_ms(10);
+//  }
+
+
+    double dx = 0.2;
+    double dtheta =0.18;
+    x += cos(theta)*dx*0.1;
+    y += sin(theta)*dx*0.1;
+    theta += dtheta*0.1;
+    if(theta > 3.14)
+    {
+      theta = -3.14;
+    }
+    tt.header.frame_id = odometry;
+    tt.child_frame_id = base_link;
     
+    tt.transform.translation.x = x;
+    tt.transform.translation.y = y;
+    
+    tt.transform.rotation = tf::createQuaternionFromYaw(theta);
+    tt.header.stamp = nh.now();
+    
+    broadcaster.sendTransform(tt);
+    publishImuMsg();
     nh.spinOnce();
-    //delay_ms(10);
+    delay_ms(20);
   }
 }
 
@@ -306,15 +316,15 @@ void publishDriveInformation(void)
    odom.header.stamp = stamp_now;
    odom_pub.publish(&odom);
   
- //tf
- updateTF(odom_tf);
- odom_tf.header.stamp = stamp_now;
- tf_broadcaster.sendTransform(odom_tf);
- 
- //joint states
- updateJointStates();
- joint_states.header.stamp = stamp_now;
- joint_states_pub.publish(&joint_states);
+  //tf
+  updateTF(odom_tf);
+  odom_tf.header.stamp = stamp_now;
+  tf_broadcaster.sendTransform(odom_tf);
+  
+  //joint states
+  updateJointStates();
+  joint_states.header.stamp = stamp_now;
+  joint_states_pub.publish(&joint_states);
 }
 
 /*******************************************************************************
@@ -325,23 +335,23 @@ void updateMotorInfo(int16_t left_tick, int16_t right_tick)
   int16_t current_tick = 0;
   static int16_t last_tick[WHEEL_NUM] = {0.0, 0.0};
   
-//  if (init_encoder)
-//  {
-//    for (int index = 0; index < WHEEL_NUM; index++)
-//    {
-//      last_diff_tick[index] = 0.0;
-//      last_tick[index]      = 0.0;
-//      last_rad[index]       = 0.0;
+ if (init_encoder)
+ {
+   for (int index = 0; index < WHEEL_NUM; index++)
+   {
+     last_diff_tick[index] = 0.0;
+     last_tick[index]      = 0.0;
+     last_rad[index]       = 0.0;
 
-//      last_velocity[index]  = 0.0;
-//    }  
+     last_velocity[index]  = 0.0;
+   }  
 
-//    last_tick[LEFT] = left_tick;
-//    last_tick[RIGHT] = right_tick;
+   last_tick[LEFT] = left_tick;
+   last_tick[RIGHT] = right_tick;
 
-//    init_encoder = false;
-//    return;
-//  }
+   init_encoder = false;
+   return;
+ }
 
   current_tick = left_tick;
 

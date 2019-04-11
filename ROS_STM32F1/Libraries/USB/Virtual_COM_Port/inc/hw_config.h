@@ -47,8 +47,8 @@ extern "C" {
 // #define LED_ON                0xF0
 // #define LED_OFF               0xFF
 
-#define USB_TX_BUFFER_SIZE (1024*2)
-#define USB_RX_BUFFER_SIZE (1024*2)
+#define USB_TX_BUFFER_SIZE (1024*3)
+#define USB_RX_BUFFER_SIZE (1024*3)
 
 extern uint8_t  _usb_tx_buffer[USB_TX_BUFFER_SIZE];
 extern uint16_t _usb_tx_buffer_length;

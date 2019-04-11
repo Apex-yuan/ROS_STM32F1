@@ -7,6 +7,8 @@
                 "${workspaceFolder}/ROS_STM32F1/BSP/motor",
                 "${workspaceFolder}/ROS_STM32F1/BSP/i2c",
                 "${workspaceFolder}/ROS_STM32F1/BSP/usart",
+                "${workspaceFolder}/ROS_STM32F1/BSP/USBSerial",
+                "${workspaceFolder}/ROS_STM32F1/BSP/USARTSerial",
                 "${workspaceFolder}/ROS_STM32F1/Libraries/CMSIS",
                 "${workspaceFolder}/ROS_STM32F1/Libraries/ROSLib",
                 "${workspaceFolder}/**",
@@ -21,7 +23,7 @@
                 "${workspaceFolder}/ROS_STM32F1/User",
                 "${workspaceFolder}/ROS_STM32F1/Libraries/USB/Virtual_COM_Port/inc",
                 "${workspaceFolder}/ROS_STM32F1/Libraries/USB/STM32_USB-FS-Device_Driver/inc",
-                "${workspaceFolder}/ROS_STM32F1/BSP/USBSerial"
+                "${workspaceFolder}/ROS_STM32F1/User"
             ],
             "defines": [
                 "USE_STDPERIPH_DRIVER",
