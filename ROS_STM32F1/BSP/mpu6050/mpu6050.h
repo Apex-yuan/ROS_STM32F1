@@ -17,11 +17,20 @@ extern "C" {
                                             //                                                Scale : +- 16.4[deg/s]  （该量程对应的精度）
 #define q30  1073741824.0f
   
+typedef struct
+{
+  float gyro[3];
+  float accel[3];
+  float quat[4];
+  float rpy[3];
+}IMU_Data;
+  
 int8_t MPU_I2C_Read(uint8_t addr, uint8_t reg, uint8_t len, uint8_t * data);
 int8_t MPU_I2C_Write(uint8_t addr, uint8_t reg, uint8_t len, uint8_t *buf);
 
 uint8_t MPU_DMP_Init(void);
-uint8_t MPU_DMP_ReadData(float *gyro, float *accel ,float *quat, float *rpy);
+uint8_t MPU_DMP_ReadData(IMU_Data *imu);
+//uint8_t MPU_DMP_ReadData(float *gyro, float *accel ,float *quat, float *rpy);
 //uint8_t MPU_DMP_GetData(short *gyro,short *accel ,float *pitch,float *roll,float *yaw);
 
 #ifdef __cplusplus

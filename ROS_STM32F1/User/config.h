@@ -8,8 +8,11 @@
 #define LED_BRINK_FERQUENCE                  20 //hz 
 #define CMD_VEL_PUBLISH_FREQUENCY            30 //hz
 #define DRIVE_INFORMATION_PUBLISH_FREQUENCY  50 //hz
-#define IMU_PUBLISH_FREQUENCY                150 //hz
+#define IMU_PUBLISH_FREQUENCY                100 //hz
 
+//sonar
+#define SONAR_NUM   4
+   
 //机器人底盘信息   
 #define WHEEL_NUM  2   
 #define WHEEL_RADIUS   0.0034 //0.033 //meter

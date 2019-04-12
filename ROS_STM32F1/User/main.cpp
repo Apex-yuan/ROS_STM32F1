@@ -3,7 +3,6 @@
 #include "main.h"
 #include <stdio.h>
 #include "bsp.h"
-//#include "HardwareSerial.h"
 #include "config.h"
 
 
@@ -44,11 +43,12 @@ char odom_child_frame_id[30] = "/base_footprint";
 
 char joint_state_header_frame_id[30];
 
-//record imu data
-float gyro[3];  // rad/s
-float accel[3]; // m/s^2
-float quat[4];   // float format
-float rpy[3];   // rad
+////record imu data
+//float gyro[3];  // rad/s
+//float accel[3]; // m/s^2
+//float quat[4];   // float format
+//float rpy[3];   // rad
+IMU_Data imu_data;
 
 //caculate for odometry
 bool init_encoder = true;
@@ -62,6 +62,9 @@ double last_velocity[WHEEL_NUM] = {0.0, 0.0};
 uint32_t prev_update_time;
 float odom_pose[3];
 float odom_vel[3];
+
+//sonar data
+uint16_t sonar_data[SONAR_NUM] = {1,2,3,4};
 
 /*callback -----------------------------------------------------------*/
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg)
@@ -78,27 +81,41 @@ void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg)
 //   //GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13)));
 // }
 
-uint16_t sonarArry[10] = {1,2,3,4};
+/*******************************************************************************
 
-geometry_msgs::TransformStamped tt;
-tf::TransformBroadcaster broadcaster;
+* Wait for Serial Link
 
-double x = 1.0;
-double y = 0.0;
-double theta = 1.57;
+*******************************************************************************/
 
-char base_link[] = "/base_link";
-char odometry[] = "/odom";
+void waitForSerialLink(bool isConnected)
+{
+  static bool wait_flag = false; 
+
+  if (isConnected)
+  {
+    if (wait_flag == false)
+    {      
+      delay_ms(20);
+      wait_flag = true;
+    }
+  }
+  else
+  {
+    wait_flag = false;
+  }
+}
+
+
 
 int main()
 {
-  //NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
   bsp_init();
+  
   nh.getHardware()->setBaud(115200);
   nh.initNode();
   
   nh.subscribe(cmd_vel_sub);
-//  nh.subscribe(led_sub);
+  //nh.subscribe(led_sub);
 
   nh.advertise(imu_pub);
   nh.advertise(odom_pub);
@@ -107,16 +124,21 @@ int main()
 
   tf_broadcaster.init(nh);
   
-  broadcaster.init(nh);
-  
+  initSonar();
   initOdom();
   initJointStates();
-  //initSonar();
-  TIM_Cmd(TIM1, ENABLE);
+  
   prev_update_time = millis();
   
   while(1)
   {
+    // test interrupt publish
+//   usb_printf("%s",USARTn_IRQHandler);
+    /*none*/
+  }
+/*目前测试在中断中发布节点信息，暂时屏蔽以下代码，待没有问题后在做处理 2019/4/42 15.00*/  
+//  while(1)
+//  {
 //   uint32_t t = millis();
 //    updateTime();
 //   if((t - tTime[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
@@ -127,7 +149,7 @@ int main()
 //   }  
 //    if((t - tTime[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
 //    {
-//     // publishDriveInformation();
+//      publishDriveInformation();
 //      tTime[2] = t;
 //    }    
 //   if((t - tTime[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
@@ -147,16 +169,7 @@ int main()
 //      }
 //      tTime[4] = t;
 //    }
-//   if(t - tTime[5] >= 1000 / 2)
-//   {
-////     sonar_msg.layout.data_offset = 0;
-////     sonar_msg.data_length = 10;
-////     //sonarArry[t%10] = t % 4096;
-////     sonar_msg.data = sonarArry;
-////     sonar_pub.publish(&sonar_msg);
-////     tTime[5] = t;
-//   }
-//    
+// 
 //    // Send log message after ROS connection
 //    sendLogMsg();
 
@@ -164,35 +177,21 @@ int main()
 //    //MPU_DMP_ReadData(gyro, accel, quat, rpy);
 //    
 //    nh.spinOnce();
-//    //delay_ms(10);
+//    //delay_ms(20);  //
+//   waitForSerialLink(nh.connected());
 //  }
-
-
-    double dx = 0.2;
-    double dtheta =0.18;
-    x += cos(theta)*dx*0.1;
-    y += sin(theta)*dx*0.1;
-    theta += dtheta*0.1;
-    if(theta > 3.14)
-    {
-      theta = -3.14;
-    }
-    tt.header.frame_id = odometry;
-    tt.child_frame_id = base_link;
-    
-    tt.transform.translation.x = x;
-    tt.transform.translation.y = y;
-    
-    tt.transform.rotation = tf::createQuaternionFromYaw(theta);
-    tt.header.stamp = nh.now();
-    
-    broadcaster.sendTransform(tt);
-    publishImuMsg();
-    nh.spinOnce();
-    delay_ms(20);
-  }
 }
 
+
+void initSonar(void)
+{
+  sonar_msg.layout.data_offset = 0;
+  sonar_msg.data_length = SONAR_NUM;
+  for(uint8_t i = 0; i < SONAR_NUM; ++i)
+  {
+    sonar_msg.data[i] = 0;
+  }
+}
 
 //
 void initOdom(void)
@@ -231,15 +230,22 @@ void initJointStates(void)
   joint_states.effort_length   = WHEEL_NUM;
 }
 
+void publishSonarMsg(void)
+{
+  sonar_data[millis() % SONAR_NUM] = millis() % 415; //暂时用来模拟超声波数据的变化
+  sonar_msg.data = sonar_data;
+  sonar_pub.publish(&sonar_msg);
+}
+
 //Publish msgs (IMU data:angular velocity, linear acceleration, orientation)
 void publishImuMsg(void)
 {
   imu_msg.header.stamp  = rosNow();
   imu_msg.header.frame_id = "imu_link";
   
-  imu_msg.angular_velocity.x = gyro[0];
-  imu_msg.angular_velocity.y = gyro[1];
-  imu_msg.angular_velocity.z = gyro[2];
+  imu_msg.angular_velocity.x = imu_data.gyro[0];
+  imu_msg.angular_velocity.y = imu_data.gyro[1];
+  imu_msg.angular_velocity.z = imu_data.gyro[2];
   imu_msg.angular_velocity_covariance[0] = 0.02;
   imu_msg.angular_velocity_covariance[1] = 0;
   imu_msg.angular_velocity_covariance[2] = 0;
@@ -250,9 +256,9 @@ void publishImuMsg(void)
   imu_msg.angular_velocity_covariance[7] = 0;
   imu_msg.angular_velocity_covariance[8] = 0.02;
   
-  imu_msg.linear_acceleration.x = accel[0];
-  imu_msg.linear_acceleration.y = accel[1];
-  imu_msg.linear_acceleration.z = accel[2];
+  imu_msg.linear_acceleration.x = imu_data.accel[0];
+  imu_msg.linear_acceleration.y = imu_data.accel[1];
+  imu_msg.linear_acceleration.z = imu_data.accel[2];
   imu_msg.linear_acceleration_covariance[0] = 0.04;
   imu_msg.linear_acceleration_covariance[1] = 0;
   imu_msg.linear_acceleration_covariance[2] = 0;
@@ -263,10 +269,10 @@ void publishImuMsg(void)
   imu_msg.linear_acceleration_covariance[7] = 0;
   imu_msg.linear_acceleration_covariance[8] = 0.04;
   
-  imu_msg.orientation.w = quat[0];
-  imu_msg.orientation.x = quat[1];
-  imu_msg.orientation.y = quat[2];
-  imu_msg.orientation.z = quat[3];
+  imu_msg.orientation.w = imu_data.quat[0];
+  imu_msg.orientation.x = imu_data.quat[1];
+  imu_msg.orientation.y = imu_data.quat[2];
+  imu_msg.orientation.z = imu_data.quat[3];
   
   imu_msg.orientation_covariance[0] = 0.0025;
   imu_msg.orientation_covariance[1] = 0;
@@ -643,14 +649,45 @@ void TIM1_UP_IRQHandler(void)
   if(TIM_GetFlagStatus(TIM1, TIM_IT_Update) != RESET)
   {
     TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
-
-//      ms_cnt++;
-//      if((ms_cnt - rate_cnt[0]) > (1000 / 200))
-//      {
-//        MPU_DMP_ReadData(gyro, accel, quat, rpy);
-//        rate_cnt[0] = ms_cnt;
-//      }
-
+    ms_cnt++;
+    //ms_cnt = millis();  //使用该句，发布频率会比需要的发布频率低很多
+    //updateTime();
+     if((ms_cnt - rate_cnt[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
+   {   
+     updateGoalVelocity();
+     motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
+     rate_cnt[0] = ms_cnt;
+   }  
+    if((ms_cnt - rate_cnt[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
+    {
+      publishDriveInformation();
+      rate_cnt[2] = ms_cnt;
+    }    
+   if((ms_cnt - rate_cnt[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
+   {
+     publishImuMsg();
+     rate_cnt[3] = ms_cnt;
+   }
+   if((ms_cnt - rate_cnt[4]) >= 1000 / LED_BRINK_FERQUENCE)
+    {
+      if(nh.connected())
+      {
+        GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13))); //led brink
+      }
+      else
+      {
+        GPIO_SetBits(GPIOC, GPIO_Pin_13); //led off
+      }
+      rate_cnt[4] = ms_cnt;
+    }
+    if((ms_cnt - rate_cnt[5]) > 1000 / 20)
+    {
+      publishSonarMsg();
+      rate_cnt[5] = ms_cnt;
+    }
+    //MPU_DMP_ReadData(gyro, accel, quat, rpy);
+    sendLogMsg();
+    nh.spinOnce();
   }
 }
 #ifdef __cplusplus

@@ -718,9 +718,9 @@
           <GroupName>Doc</GroupName>
           <Files>
             <File>
-              <FileName>log.txt</FileName>
+              <FileName>log.md</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Doc\log.txt</FilePath>
+              <FilePath>..\Doc\log.md</FilePath>
             </File>
           </Files>
         </Group>
@@ -1438,9 +1438,9 @@
           <GroupName>Doc</GroupName>
           <Files>
             <File>
-              <FileName>log.txt</FileName>
+              <FileName>log.md</FileName>
               <FileType>5</FileType>
-              <FilePath>..\Doc\log.txt</FilePath>
+              <FilePath>..\Doc\log.md</FilePath>
             </File>
           </Files>
         </Group>

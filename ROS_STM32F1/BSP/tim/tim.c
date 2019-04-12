@@ -15,20 +15,22 @@ void TIM1_TIMER_Init(uint16_t arr, uint16_t psc)
   
   //TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
   //TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
-  TIM_ITConfig(  //使能或者失能指定的TIM1中断
-		TIM1, //TIM1
-		TIM_IT_Update  |  //TIM1 中断源
-		TIM_IT_Trigger,   //TIM1 触发中断源 
-		ENABLE  //使能
-		);
+//  TIM_ITConfig(  //使能或者失能指定的TIM1中断
+//		TIM1, //TIM1
+//		TIM_IT_Update,//  |  //TIM1 中断源
+//		/*TIM_IT_Trigger,*/   //TIM1 触发中断源 
+//		ENABLE  //使能
+//		);
   
   NVIC_InitStructure.NVIC_IRQChannel = TIM1_UP_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
   
-  TIM_Cmd(TIM1, DISABLE);
+  TIM_ClearITPendingBit(TIM1, TIM_IT_Update);  //没有该句程序会莫名跑飞（到硬件上访中断）
+  TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);  
+  TIM_Cmd(TIM1, ENABLE);
 }
 
 ////中断服务函数

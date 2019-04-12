@@ -6,9 +6,9 @@
 #define USE_USB_SERIAL
 
 #if defined(USE_USB_SERIAL) //use usb serial
- #define SERIAL_CLASS  USBSerial //HardwareSerial //USBSerial
+ #define SERIAL_CLASS  USBSerial
  #define Serial Serial0
-#elif //use usart serial
+#else //use usart serial
  #define SERIAL_CLASS USARTSerial
  #define Serial Serial3
 #endif /* USE_USB_SERIAL*/

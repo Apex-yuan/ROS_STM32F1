@@ -36,10 +36,17 @@ void delay_us(uint32_t uillis)
 	target = _us_tick + uillis;
 	while(_us_tick < target);
 }
+static uint32_t i = 0;
 void SysTick_Handler(void) 
 {
 	_us_tick++;
-  _ms_tick = _us_tick / 1000;
+  i++;
+  //_ms_tick = _us_tick / 1000;
+  if(i / 1000 >= 1)
+  {
+    i = 0;
+    _ms_tick++;
+  }
 }
 
 uint32_t millis(void) 

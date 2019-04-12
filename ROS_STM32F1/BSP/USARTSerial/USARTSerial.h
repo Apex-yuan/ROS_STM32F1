@@ -12,10 +12,11 @@
 #define USARTn_RX_PORT GPIOB
 #define USARTn_RX_PIN  GPIO_Pin_11
 
-#define USARTn_Event USARTn##IRQHandler
+#define USARTn_IRQ(a,b)  a##b
+#define USARTn_IRQHandler USARTn_IRQ(USARTn##IRQHandler)
 
-#define USARTn_TX_BUFFER_SIZE  (64)
-#define USARTn_RX_BUFFER_SIZE  (64)
+#define USARTn_TX_BUFFER_SIZE  64//(1024*2)
+#define USARTn_RX_BUFFER_SIZE  64//(1024*2)
 
 class USARTSerial {
 public:

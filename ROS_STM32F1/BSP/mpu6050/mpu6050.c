@@ -201,7 +201,8 @@ uint8_t MPU_DMP_Init(void)
 //quat :四元数（float格式）
 //返回值:0,正常
 //    其他,失败
-uint8_t MPU_DMP_ReadData(float *gyro, float *accel ,float *quat, float *rpy)
+//uint8_t MPU_DMP_ReadData(float *gyro, float *accel ,float *quat, float *rpy)
+uint8_t MPU_DMP_ReadData(IMU_Data *imu)
 {
 	//float q0=1.0f,q1=0.0f,q2=0.0f,q3=0.0f;
 	unsigned long sensor_timestamp;
@@ -218,7 +219,7 @@ uint8_t MPU_DMP_ReadData(float *gyro, float *accel ,float *quat, float *rpy)
   {
     for(int i = 0; i < 3; ++i)
     {
-      gyro[i] = gyro_raw[i] * GYRO_FACTOR;
+      imu->gyro[i] = gyro_raw[i] * GYRO_FACTOR;
     }
   }
   else
@@ -228,7 +229,7 @@ uint8_t MPU_DMP_ReadData(float *gyro, float *accel ,float *quat, float *rpy)
   {
     for(int i = 0; i < 3; ++i)
     {
-      accel[i] = accel_raw[i] * ACCEL_FACTOR;
+      imu->accel[i] = accel_raw[i] * ACCEL_FACTOR;
     }
   }
   else
@@ -241,12 +242,12 @@ uint8_t MPU_DMP_ReadData(float *gyro, float *accel ,float *quat, float *rpy)
 	{
     for(int i = 0; i < 4; i++)
     {
-      quat[i] = quat_raw[i] / q30;  //q30格式转换为浮点数
+      imu->quat[i] = quat_raw[i] / q30;  //q30格式转换为浮点数
     }
 		//计算得到欧拉角（俯仰角/横滚角/航向角）
-		rpy[0] = asin(-2 * quat[1] * quat[3] + 2 * quat[0]* quat[2]);	// pitch
-		rpy[1] = atan2(2 * quat[2] * quat[3] + 2 * quat[0] * quat[1], -2 * quat[1] * quat[1] - 2 * quat[2] * quat[2] + 1);	// roll
-		rpy[2] = atan2(2*(quat[1] * quat[2] + quat[0] * quat[3]), quat[0] * quat[0] + quat[1] * quat[1] - quat[2] * quat[2] - quat[3] * quat[3]);	//yaw
+		imu->rpy[0] = asin(-2 * imu->quat[1] * imu->quat[3] + 2 * imu->quat[0]* imu->quat[2]);	// pitch
+		imu->rpy[1] = atan2(2 * imu->quat[2] * imu->quat[3] + 2 * imu->quat[0] * imu->quat[1], -2 * imu->quat[1] * imu->quat[1] - 2 * imu->quat[2] * imu->quat[2] + 1);	// roll
+		imu->rpy[2] = atan2(2*(imu->quat[1] * imu->quat[2] + imu->quat[0] * imu->quat[3]), imu->quat[0] * imu->quat[0] + imu->quat[1] * imu->quat[1] - imu->quat[2] * imu->quat[2] - imu->quat[3] * imu->quat[3]);	//yaw
 	}
   else 
     return 4;

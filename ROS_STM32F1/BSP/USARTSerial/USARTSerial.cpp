@@ -37,7 +37,7 @@ void USARTSerial::begin(uint32_t baud)
     USART_Init(USART3, &USART_InitStructure);
 
     NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
@@ -55,7 +55,7 @@ void USARTSerial::end(void)
 
 int USARTSerial::available(void)
 {
-    return (USARTn_RX_BUFFER_SIZE + _usartn_rx_buffer_head - _usartn_rx_buffer_tail) % USARTn_RX_BUFFER_SIZE;
+    return (uint32_t)(USARTn_RX_BUFFER_SIZE + _usartn_rx_buffer_head - _usartn_rx_buffer_tail) % USARTn_RX_BUFFER_SIZE;
 }
 
 int USARTSerial::read(void)

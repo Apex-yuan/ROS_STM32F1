@@ -1,5 +1,5 @@
 #include "HardwareSerial.h"
-#include "hw_config.h"
+//#include "hw_config.h"
 
 HardwareSerial Serial;
 
@@ -31,7 +31,7 @@ void HardwareSerial::begin(uint32_t baud)
   GPIO_Init(USART3_RX_PORT, &GPIO_InitStructure);  
 
   /* USART 初始化设置 */
-  USART_InitStructure
+  //USART_InitStructure
 	USART_InitStructure.USART_BaudRate = baud;  //波特率：一般设置为115200;
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;  //字长：为8位数据格式
 	USART_InitStructure.USART_StopBits = USART_StopBits_1;  //停止位：一个停止位

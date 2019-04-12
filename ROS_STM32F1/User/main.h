@@ -20,9 +20,11 @@ ros::Time rosNow();
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg);
 void ledCallback(const std_msgs::Empty& led_msg);
 
+void initSonar(void);
 void initOdom(void);
 void initJointStates(void);
 
+void publishSonarMsg(void);
 void publishImuMsg(void);
 void publishDriveInformation(void);
 bool calcOdometry(double diff_time);

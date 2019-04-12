@@ -7,6 +7,8 @@
 
 void bsp_init(void)
 {
+  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+  //TIM1_TIMER_Init(999, 71); //暂时没用到
   systick_init();	
   /*配置USB 虚拟串口*/
   USB_Connection_Config(DISABLE); //USB先断开
