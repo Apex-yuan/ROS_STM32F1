@@ -5,6 +5,10 @@
  extern "C" {
 #endif
 
+#ifndef PI
+ #define PI 3.1415926
+#endif
+   
 #define LED_BRINK_FERQUENCE                  20 //hz 
 #define CMD_VEL_PUBLISH_FREQUENCY            30 //hz
 #define DRIVE_INFORMATION_PUBLISH_FREQUENCY  50 //hz

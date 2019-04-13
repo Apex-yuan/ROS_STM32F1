@@ -1,4 +1,7 @@
 #include "direction_control.h"
+#include "config.h"
+
+#include "mpu6050.h"
 
 float g_fDirectionControlOut = 0;
 float g_fDirectionControlNew, g_fDirectionControlOld;
@@ -7,10 +10,26 @@ uint16_t g_nDirectionControlCount;
 
 float g_fDirectionSet;
 
+extern float goal_velocity[WHEEL_NUM];
+extern IMU_Data imu_data;
+
+float DIRECTION_P = 0.5;
+float DIRECTION_D = 0.5;
+
+
 void DirectionControl()
 {
-//  float fValue; 
-  g_fDirectionControlNew = g_fDirectionSet;
+  float theta, delta_theta;
+  static float last_theta;
+  float fValue; 
+  float w;
+  //RAD2DEG
+//  theta = RAD2DEG(imu_data.rpy[2]);
+//  delta_theta = theta -  last_theta;
+//  w = delta_theta / DIRECTION_CONTROL_PERIOD;  //∂»/√Î
+//  
+//  fValue = DIRECTION_SET - w + RAD2DEG(goal_velocity[ANGULAR]);
+  g_fDirectionControlNew = goal_velocity[ANGULAR] * 200;//g_fDirectionSet;
   
   g_fDirectionControlOld = g_fDirectionControlNew;
 }

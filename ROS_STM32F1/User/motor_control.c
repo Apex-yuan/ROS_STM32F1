@@ -25,8 +25,8 @@ void MotorOutput(void)
     g_fLeftMotorOut = g_fAngleControlOut + g_fSpeedControlOut - g_fDirectionControlOut;
     g_fRightMotorOut = g_fAngleControlOut + g_fSpeedControlOut + g_fDirectionControlOut;
   #endif
-  g_fware[5] = g_fAngleControlOut + g_fSpeedControlOut;
-  g_fware[6] = g_fAngleControlOut + g_fSpeedControlOut;
+//  g_fware[5] = g_fAngleControlOut + g_fSpeedControlOut;
+//  g_fware[6] = g_fAngleControlOut + g_fSpeedControlOut;
   
   if(g_fLeftMotorOut >= 1000)
     g_fLeftMotorOut = 1000;

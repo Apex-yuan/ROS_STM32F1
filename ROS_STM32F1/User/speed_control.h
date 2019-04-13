@@ -1,6 +1,10 @@
 #ifndef __SPEED_CONTROL_H
 #define __SPEED_CONTROL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 //#include "stm32f10x.h"
 
@@ -18,6 +22,8 @@ extern float g_fSpeedControlOutOld, g_fSpeedControlOutNew;
 extern float g_fSpeedControlIntegral;
 extern float g_fSpeedControlOut;
 extern uint16_t g_nSpeedControlPeriod;
+//临时为ros发布数据定义的变量，后续在优化
+extern int left_encoder_count, right_encoder_count;
 
 //蓝牙控制相关变量
 extern float g_fBTSpeedSet;
@@ -26,6 +32,10 @@ extern float g_fBTSpeedSet;
 void GetMotorPulse(void);
 void SpeedControl(void);
 void SpeedControlOutput(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SPEED_CONTROL_H */
 

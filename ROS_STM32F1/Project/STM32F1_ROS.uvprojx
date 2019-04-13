@@ -712,6 +712,26 @@
               <FileType>5</FileType>
               <FilePath>..\User\config.h</FilePath>
             </File>
+            <File>
+              <FileName>angle_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\angle_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>speed_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\speed_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>direction_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\direction_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\motor_control.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1431,6 +1451,26 @@
               <FileName>config.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\config.h</FilePath>
+            </File>
+            <File>
+              <FileName>angle_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\angle_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>speed_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\speed_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>direction_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\direction_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\motor_control.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -5,6 +5,12 @@
 #include "bsp.h"
 #include "config.h"
 
+//balance car
+#include "angle_control.h"
+#include "speed_control.h"
+#include "direction_control.h"
+#include "motor_control.h"
+
 
 /* ROS NodeHandle ------------------------------------------------------------------*/
 ros::NodeHandle nh;
@@ -130,56 +136,63 @@ int main()
   
   prev_update_time = millis();
   
-  while(1)
-  {
-    // test interrupt publish
-//   usb_printf("%s",USARTn_IRQHandler);
-    /*none*/
-  }
-/*目前测试在中断中发布节点信息，暂时屏蔽以下代码，待没有问题后在做处理 2019/4/42 15.00*/  
-//  while(1)
-//  {
-//   uint32_t t = millis();
-//    updateTime();
-//   if((t - tTime[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
-//   {   
-//     updateGoalVelocity();
-//     motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
-//     tTime[0] = t;
-//   }  
-//    if((t - tTime[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
-//    {
-//      publishDriveInformation();
-//      tTime[2] = t;
-//    }    
-//   if((t - tTime[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
+//   while(1)
 //   {
-//     publishImuMsg();
-//     tTime[3] = t;
+//     // test interrupt publish
+// //   usb_printf("%s",USARTn_IRQHandler);
+//     /*none*/
 //   }
-//   if((t - tTime[4]) >= 1000 / LED_BRINK_FERQUENCE)
-//    {
-//      if(nh.connected())
-//      {
-//        GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13))); //led brink
-//      }
-//      else
-//      {
-//        GPIO_SetBits(GPIOC, GPIO_Pin_13); //led off
-//      }
-//      tTime[4] = t;
-//    }
-// 
-//    // Send log message after ROS connection
-//    sendLogMsg();
+/*目前测试在中断中发布节点信息，暂时屏蔽以下代码，待没有问题后在做处理 2019/4/42 15.00*/  
+ while(1)
+ {
+  uint32_t t = millis();
+   updateTime();
+  if((t - tTime[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
+  {   
+    updateGoalVelocity();
+    //motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
+    tTime[0] = t;
+  }  
+   if((t - tTime[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
+   {
+     publishDriveInformation();
+     tTime[2] = t;
+   }    
+  if((t - tTime[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
+  {
+    publishImuMsg();
+    tTime[3] = t;
+  }
+  if((t - tTime[4]) >= 1000 / LED_BRINK_FERQUENCE)
+   {
+     if(nh.connected())
+     {
+       GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13))); //led brink
+     }
+     else
+     {
+       GPIO_SetBits(GPIOC, GPIO_Pin_13); //led off
+     }
+     tTime[4] = t;
+   }
+   if(t - tTime[5] >= 1000 / 50)
+   {
+     publishSonarMsg();
+     tTimep[5] = t;
+   }
 
-//    //
-//    //MPU_DMP_ReadData(gyro, accel, quat, rpy);
+   // Send log message after ROS connection
+   sendLogMsg();
+
+   //
 //    
-//    nh.spinOnce();
-//    //delay_ms(20);  //
-//   waitForSerialLink(nh.connected());
-//  }
+   //
+   //MPU_DMP_ReadData(&imu_data);
+   
+   nh.spinOnce();
+   //delay_ms(20);  //
+  waitForSerialLink(nh.connected());
+ }
 }
 
 
@@ -190,8 +203,8 @@ void initSonar(void)
   for(uint8_t i = 0; i < SONAR_NUM; ++i)
   {
     sonar_msg.data[i] = 0;
+  }shhshs
   }
-}
 
 //
 void initOdom(void)
@@ -300,7 +313,7 @@ void publishImuMsg(void)
 //  tf_broadcaster.sendTransform(tfs_msg);
 }
 
-int16_t encoder_l, encoder_r;
+int32_t encoder_l, encoder_r;
 void publishDriveInformation(void)
 {
   unsigned long time_now = millis();
@@ -310,8 +323,8 @@ void publishDriveInformation(void)
   prev_update_time = time_now;
   ros::Time stamp_now = rosNow(); //rosNow();
   
-  encoder_l = (int16_t)TIM_GetCounter(TIM3);
-  encoder_r = - (int16_t)TIM_GetCounter(TIM4);
+  encoder_l = left_encoder_count;  //(int16_t)TIM_GetCounter(TIM3);
+  encoder_r = right_encoder_count; //- (int16_t)TIM_GetCounter(TIM4);
   
   updateMotorInfo(encoder_l, encoder_r);
   
@@ -637,7 +650,16 @@ ros::Time addMicros(ros::Time & t, uint32_t _micros)
 //下面部分为TIM1中断服务函数，待后续探索其用途。2019/4/5 8.26
 
  uint32_t ms_cnt = 0;
+//uint8_t g_n1MsEventCount = 0;
  uint32_t rate_cnt[10] = {0};
+ 
+ //平衡车
+#define CONTROL_PERIOD 5 //5ms
+#define SPEED_CONTROL_COUNT 20 //20*5=100ms
+#define DIRECTION_CONTROL_COUNT 2 //2*5=10ms
+
+float g_n1MsEventCount = 0;
+float g_nSpeedControlCount = 0;
 
 #ifdef __cplusplus
 extern "C" {
@@ -649,45 +671,96 @@ void TIM1_UP_IRQHandler(void)
   if(TIM_GetFlagStatus(TIM1, TIM_IT_Update) != RESET)
   {
     TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
-    ms_cnt++;
-    //ms_cnt = millis();  //使用该句，发布频率会比需要的发布频率低很多
-    //updateTime();
-     if((ms_cnt - rate_cnt[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
+    //ms_cnt++;
+    
+    //中断服务程序：
+    g_n1MsEventCount ++;
+    
+    g_nSpeedControlPeriod ++;
+    SpeedControlOutput();
+    g_nDirectionControlPeriod ++;
+    DirectionControlOutput();
+    
+    if(g_n1MsEventCount >= CONTROL_PERIOD)
+    {
    {   
-     updateGoalVelocity();
-     motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
-     rate_cnt[0] = ms_cnt;
+    {
+      g_n1MsEventCount = 0;
+      GetMotorPulse();
+    }
    }  
-    if((ms_cnt - rate_cnt[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
-    {
-      publishDriveInformation();
-      rate_cnt[2] = ms_cnt;
-    }    
-   if((ms_cnt - rate_cnt[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
-   {
-     publishImuMsg();
-     rate_cnt[3] = ms_cnt;
-   }
-   if((ms_cnt - rate_cnt[4]) >= 1000 / LED_BRINK_FERQUENCE)
-    {
-      if(nh.connected())
-      {
-        GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13))); //led brink
-      }
-      else
-      {
-        GPIO_SetBits(GPIOC, GPIO_Pin_13); //led off
-      }
-      rate_cnt[4] = ms_cnt;
     }
-    if((ms_cnt - rate_cnt[5]) > 1000 / 20)
+    else if(g_n1MsEventCount == 1)
     {
-      publishSonarMsg();
-      rate_cnt[5] = ms_cnt;
+      //更新IMU数据
+      //MPU_DMP_ReadData(gyro, accel, quat, rpy);  //该函数放在while循环中，小车电机就会失控，尚不清楚原因。 
+      MPU_DMP_ReadData(&imu_data);      
     }
-    //MPU_DMP_ReadData(gyro, accel, quat, rpy);
-    sendLogMsg();
-    nh.spinOnce();
+    else if(g_n1MsEventCount == 2)
+    {
+      AngleControl();
+      MotorOutput();
+    }
+    else if (g_n1MsEventCount == 3)
+    {
+      g_nSpeedControlCount ++;
+      if(g_nSpeedControlCount >= SPEED_CONTROL_COUNT)
+      {
+        SpeedControl();
+        g_nSpeedControlCount = 0;
+        g_nSpeedControlPeriod = 0;
+      }
+    }
+    else if(g_n1MsEventCount == 4)
+    {
+      g_nDirectionControlCount ++;
+      if(g_nDirectionControlCount >= DIRECTION_CONTROL_COUNT)
+      {
+        DirectionControl();
+        g_nDirectionControlCount = 0;
+        g_nDirectionControlPeriod = 0;
+      }
+    }
+    
+    
+  //   //ms_cnt = millis();  //使用该句，发布频率会比需要的发布频率低很多
+  //   //updateTime();
+  //    if((ms_cnt - rate_cnt[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
+  //  {   
+  //    updateGoalVelocity();
+  //    //motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
+  //    rate_cnt[0] = ms_cnt;
+  //  }  
+  //   if((ms_cnt - rate_cnt[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
+  //   {
+  //     publishDriveInformation();
+  //     rate_cnt[2] = ms_cnt;
+  //   }    
+  //  if((ms_cnt - rate_cnt[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
+  //  {
+  //    publishImuMsg();
+  //    rate_cnt[3] = ms_cnt;
+  //  }
+  //  if((ms_cnt - rate_cnt[4]) >= 1000 / LED_BRINK_FERQUENCE)
+  //   {
+  //     if(nh.connected())
+  //     {
+  //       GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13))); //led brink
+  //     }
+  //     else
+  //     {
+  //       GPIO_SetBits(GPIOC, GPIO_Pin_13); //led off
+  //     }
+  //     rate_cnt[4] = ms_cnt;
+  //   }
+  //   if((ms_cnt - rate_cnt[5]) > 1000 / 20)
+  //   {
+  //     publishSonarMsg();
+  //     rate_cnt[5] = ms_cnt;
+  //   }
+  //   MPU_DMP_ReadData(&imu_data);
+  //   sendLogMsg();
+  //   nh.spinOnce();
   }
 }
 #ifdef __cplusplus

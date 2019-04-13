@@ -1,8 +1,14 @@
 #ifndef __DIRECTION_CONTROL_H
 #define __DIRECTION_CONTROL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "stdint.h"
 
+#define DIRECTION_SET 0
+  
 #define DIRECTION_CONTROL_PERIOD 10
 
 
@@ -17,6 +23,10 @@ extern float g_fDirectionSet;
 void DirectionControl(void);
 void DirectionControlOutput(void);
 
+#ifdef __cplusplus
+}
+#endif
+  
 #endif /* __DIRECTION_CONTROL_H */
 
 
