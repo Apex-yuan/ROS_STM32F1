@@ -3,4 +3,4 @@ Listings/
 Objects/
 *.xiaoyuan
 *.uvoptx
-.vscode/**/*.ipch
+.vscode/ipch
