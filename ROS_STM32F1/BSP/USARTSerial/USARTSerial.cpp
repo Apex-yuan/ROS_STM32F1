@@ -160,13 +160,13 @@ void USARTSerial::tx_irq(void)
 extern "C" {
 #endif
   //USART3_IRQHandler
-void USART3_IRQHandler(void)
-//void USARTn_Event(void)
-{
-    Serial3.tx_irq();
-    //Serial3.rx_irq();
-  Serial3.rx_irq();
-}
+//void USART3_IRQHandler(void)
+////void USARTn_Event(void)
+//{
+//    Serial3.tx_irq();
+//    //Serial3.rx_irq();
+//  Serial3.rx_irq();
+//}
 
 #ifdef __cplusplus
 }

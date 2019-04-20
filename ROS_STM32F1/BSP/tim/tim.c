@@ -11,6 +11,7 @@ void TIM1_TIMER_Init(uint16_t arr, uint16_t psc)
   TIM_TimeBaseInitStructure.TIM_Prescaler = psc;
   TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
   TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
+  TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;  //没有该句会出现定时不准确的情况，具体件log.md文件
   TIM_TimeBaseInit(TIM1,&TIM_TimeBaseInitStructure);
   
   //TIM_ClearITPendingBit(TIM1, TIM_IT_Update);

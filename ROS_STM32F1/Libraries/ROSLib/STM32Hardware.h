@@ -12,6 +12,7 @@
  #define SERIAL_CLASS USARTSerial
  #define Serial Serial3
 #endif /* USE_USB_SERIAL*/
+
 class STM32Hardware {
   public:
   	STM32Hardware(SERIAL_CLASS* io , long baud= 57600){

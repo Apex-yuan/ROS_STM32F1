@@ -13,6 +13,7 @@
 #include "motor.h"
 #include "encoder.h"
 #include "tim.h"
+#include "usart3.h"
 
 void bsp_init(void);
 

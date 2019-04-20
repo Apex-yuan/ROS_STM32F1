@@ -1,6 +1,10 @@
 #ifndef __PROTOCOL_H
 #define __PROTOCOL_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include "usart3.h"
 
 #define BYTE0(dwTemp) (*(char *)(&dwTemp))
@@ -24,6 +28,10 @@ void vcan_sendware(uint8_t *wareaddr, uint32_t waresize);
 
 void ProtocolCpyData(void);
 void Protocol(void);
+
+#ifdef __cplusplus
+ } 
+#endif
 
 #endif 
 

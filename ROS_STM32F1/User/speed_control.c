@@ -18,7 +18,7 @@ float g_fBTSpeedSet = 0;
 int left_encoder_count, right_encoder_count;
 
 float SPEED_CONTROL_P = 300;//300;//350;
-float SPEED_CONTROL_I = 0.6;//25;
+float SPEED_CONTROL_I = 5;//0.6;//25;
 
 extern float goal_velocity[WHEEL_NUM];
 
@@ -26,15 +26,17 @@ extern float goal_velocity[WHEEL_NUM];
 //每5ms执行一次累加20次
 void GetMotorPulse(void)
 {
-  int32_t nLeftMotorPulse,nRightMotorPulse;
+  int16_t nLeftMotorPulse,nRightMotorPulse;
   
   nLeftMotorPulse = (int16_t)TIM_GetCounter(TIM3);
   nRightMotorPulse = -(int16_t)TIM_GetCounter(TIM4);
   TIM_SetCounter(TIM3,0);
   TIM_SetCounter(TIM4,0);
   
+  //平衡车部分
   g_nLeftMotorPulseSigma += nLeftMotorPulse;
   g_nRightMotorPulseSigma += nRightMotorPulse;
+  //ROS部分
   left_encoder_count += nLeftMotorPulse;
   right_encoder_count += nRightMotorPulse;
 }
@@ -67,9 +69,9 @@ void SpeedControlOutput(void)
   fDelta = g_fSpeedControlOutNew - g_fSpeedControlOutOld;
   g_fSpeedControlOut = fDelta * (g_nSpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + g_fSpeedControlOutOld;
   
-//  //虚拟示波器
-//  g_fware[3] = g_fSpeedControlOut;
-//  g_fware[4] = g_fCarSpeed*100;
+  //虚拟示波器
+  g_fware[3] = g_fSpeedControlOut;
+  g_fware[4] = g_fCarSpeed*100;
 }
 
 

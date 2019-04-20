@@ -18,7 +18,7 @@ extern float g_fDirectionControlNew, g_fDirectionControlOld;
 extern uint8_t g_nDirectionControlPeriod;
 extern uint16_t g_nDirectionControlCount;
 
-extern float g_fDirectionSet;
+extern float g_fBTDirectionSet;
 
 void DirectionControl(void);
 void DirectionControlOutput(void);

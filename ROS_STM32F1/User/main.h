@@ -10,8 +10,10 @@
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Empty.h>
 #include <sensor_msgs/Imu.h>
+#include <sensor_msgs/BatteryState.h>
 #include <std_msgs/UInt16MultiArray.h>
 #include <std_msgs/MultiArrayDimension.h>
+#include <std_msgs/Float32MultiArray.h>
 
 
 ros::Time addMicros(ros::Time & t, uint32_t _micros);
@@ -20,12 +22,16 @@ ros::Time rosNow();
 
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg);
 void ledCallback(const std_msgs::Empty& led_msg);
+void pidCallback(const std_msgs::Float32MultiArray & pid_msg);
 
 void initSonar(void);
+void initRpy(void);
 void initOdom(void);
 void initJointStates(void);
 
 void publishSonarMsg(void);
+void publishRpyMsg(void);
+void publishBatteryStateMsg(void);
 void publishImuMsg(void);
 void publishDriveInformation(void);
 bool calcOdometry(double diff_time);

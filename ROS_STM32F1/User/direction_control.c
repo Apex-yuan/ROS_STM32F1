@@ -8,7 +8,7 @@ float g_fDirectionControlNew, g_fDirectionControlOld;
 uint8_t g_nDirectionControlPeriod;
 uint16_t g_nDirectionControlCount;
 
-float g_fDirectionSet;
+float g_fBTDirectionSet;
 
 extern float goal_velocity[WHEEL_NUM];
 extern IMU_Data imu_data;
@@ -19,17 +19,17 @@ float DIRECTION_D = 0.5;
 
 void DirectionControl()
 {
-  float theta, delta_theta;
-  static float last_theta;
-  float fValue; 
-  float w;
+//  float theta, delta_theta;
+//  static float last_theta;
+//  float fValue; 
+//  float w;
   //RAD2DEG
 //  theta = RAD2DEG(imu_data.rpy[2]);
 //  delta_theta = theta -  last_theta;
 //  w = delta_theta / DIRECTION_CONTROL_PERIOD;  //度/秒
 //  
 //  fValue = DIRECTION_SET - w + RAD2DEG(goal_velocity[ANGULAR]);
-  g_fDirectionControlNew = goal_velocity[ANGULAR] * 200;//g_fDirectionSet;
+  g_fDirectionControlNew = goal_velocity[ANGULAR] * 200 + g_fBTDirectionSet; //同时支持ROS下发和蓝牙控制
   
   g_fDirectionControlOld = g_fDirectionControlNew;
 }

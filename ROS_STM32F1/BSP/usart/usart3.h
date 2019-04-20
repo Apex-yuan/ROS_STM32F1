@@ -14,6 +14,10 @@
 #ifndef __USART3_H
 #define __USART3_H
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include "stm32f10x.h"
 #include <stdbool.h>
 
@@ -41,5 +45,8 @@ extern RxFramTypeDef rxFram;
 void usart3_init(uint32_t baud);
 void usart3_printf (char * Data, ... );
 
+#ifdef __cplusplus
+ }
+#endif
 
 #endif //__USART_H

@@ -10,6 +10,8 @@
 #include "speed_control.h"
 #include "direction_control.h"
 #include "motor_control.h"
+#include "sensor.h"
+#include "protocol.h"
 
 
 /* ROS NodeHandle ------------------------------------------------------------------*/
@@ -23,13 +25,19 @@ nav_msgs::Odometry odom;
 ros::Publisher odom_pub("odom", &odom);
 //Joint (Dynamixel) state of robot
 sensor_msgs::JointState joint_states;
-ros::Publisher joint_states_pub("joint_states",&joint_states);
+ros::Publisher joint_states_pub("joint_states", &joint_states);
+//Battey state 
+sensor_msgs::BatteryState battery_state_msg;
+ros::Publisher battery_state_pub("battery_state", &battery_state_msg);
 //IMU 
 sensor_msgs::Imu imu_msg;
 ros::Publisher imu_pub("imu", &imu_msg);
-
+//sonar
 std_msgs::UInt16MultiArray sonar_msg;
 ros::Publisher sonar_pub("sonar", &sonar_msg );
+//rpy
+std_msgs::Float32MultiArray rpy_msg;
+ros::Publisher rpy_pub("rpy", &rpy_msg);
 
 /* Tranceform Broadcaster ----------------------------------------------------------*/
 geometry_msgs::TransformStamped tfs_msg;
@@ -37,8 +45,11 @@ geometry_msgs::TransformStamped odom_tf;
 tf::TransformBroadcaster tf_broadcaster;
 
 /* Suberscriber ------------------------------------------------------------------*/
-ros::Subscriber<geometry_msgs::Twist> cmd_vel_sub("cmd_vel",commandVelocityCallback);
+ros::Subscriber<geometry_msgs::Twist> cmd_vel_sub("cmd_vel", commandVelocityCallback);
 // ros::Subscriber<std_msgs::Empty > led_sub("toggle_led", ledCallback);
+ros::Subscriber<std_msgs::Float32MultiArray> pid_sub("pid", pidCallback);
+
+float ros_kp,ros_ki,ros_kd;
 
 static uint32_t tTime[10];
 float goal_velocity[WHEEL_NUM] = {0.0, 0.0};
@@ -54,7 +65,7 @@ char joint_state_header_frame_id[30];
 //float accel[3]; // m/s^2
 //float quat[4];   // float format
 //float rpy[3];   // rad
-IMU_Data imu_data;
+//IMU_Data imu_data;
 
 //caculate for odometry
 bool init_encoder = true;
@@ -72,6 +83,9 @@ float odom_vel[3];
 //sonar data
 uint16_t sonar_data[SONAR_NUM] = {1,2,3,4};
 
+//declatation for battery
+uint8_t battery_state = 0;
+
 /*callback -----------------------------------------------------------*/
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg)
 {
@@ -80,6 +94,14 @@ void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg)
 
   goal_velocity_from_cmd[LINEAR] = constrain(goal_velocity_from_cmd[LINEAR], MIN_LINEAR_VELOCITY, MAX_LINEAR_VELOCITY);
   goal_velocity_from_cmd[ANGULAR] = constrain(goal_velocity_from_cmd[ANGULAR], MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
+}
+
+void pidCallback(const std_msgs::Float32MultiArray & pid_msg)
+{
+  //pid_msg.data_length = 3;
+  ros_kp = pid_msg.data[0];
+  ros_ki = pid_msg.data[1];
+  ros_kd = pid_msg.data[2];
 }
 
 // void ledCallback(const std_msgs::Empty& led_msg)
@@ -115,6 +137,7 @@ void waitForSerialLink(bool isConnected)
 
 int main()
 {
+  //init hardware periph
   bsp_init();
   
   nh.getHardware()->setBaud(115200);
@@ -122,26 +145,43 @@ int main()
   
   nh.subscribe(cmd_vel_sub);
   //nh.subscribe(led_sub);
+  nh.subscribe(pid_sub);
 
   nh.advertise(imu_pub);
   nh.advertise(odom_pub);
   nh.advertise(joint_states_pub);
   nh.advertise(sonar_pub);
+  nh.advertise(rpy_pub);
+  nh.advertise(battery_state_pub);
 
   tf_broadcaster.init(nh);
   
+  /*订阅消息初始化*/
+  
+  /*发布信息初始化*/
   initSonar();
+  initRpy();
   initOdom();
   initJointStates();
   
   prev_update_time = millis();
   
-//   while(1)
-//   {
-//     // test interrupt publish
-// //   usb_printf("%s",USARTn_IRQHandler);
-//     /*none*/
-//   }
+  while(1)
+  {
+    //nh.spinOnce(); 该函数可以放在while循环中
+    //delay_ms(10);
+    
+    vcan_sendware((uint8_t *)g_fware,sizeof(g_fware));
+    delay_ms(10);
+
+    if(g_bNewLineFlag == 1)
+    {
+      g_bNewLineFlag = 0;
+      ProtocolCpyData();
+      Protocol();
+    }
+    // test interrupt publish
+  }
 /*目前测试在中断中发布节点信息，暂时屏蔽以下代码，待没有问题后在做处理 2019/4/42 15.00*/  
  while(1)
  {
@@ -178,14 +218,12 @@ int main()
    if(t - tTime[5] >= 1000 / 50)
    {
      publishSonarMsg();
-     tTimep[5] = t;
+     tTime[5] = t;
    }
 
    // Send log message after ROS connection
    sendLogMsg();
-
-   //
-//    
+       
    //
    //MPU_DMP_ReadData(&imu_data);
    
@@ -203,8 +241,13 @@ void initSonar(void)
   for(uint8_t i = 0; i < SONAR_NUM; ++i)
   {
     sonar_msg.data[i] = 0;
-  }shhshs
   }
+}
+void initRpy(void)
+{
+  rpy_msg.layout.data_offset = 0;
+  rpy_msg.data_length = 3;
+}
 
 //
 void initOdom(void)
@@ -248,6 +291,31 @@ void publishSonarMsg(void)
   sonar_data[millis() % SONAR_NUM] = millis() % 415; //暂时用来模拟超声波数据的变化
   sonar_msg.data = sonar_data;
   sonar_pub.publish(&sonar_msg);
+}
+
+//publish msgs(rpy 欧拉角)
+void publishRpyMsg(void)
+{
+  rpy_msg.data = imu_data.rpy;
+  rpy_pub.publish(&rpy_msg);
+}
+
+//publish msgs(battery_state)
+void publishBatteryStateMsg(void)
+{
+  battery_state_msg.header.stamp = rosNow();
+  battery_state_msg.design_capacity = 1.8f; //Ah
+  battery_state_msg.voltage = 10.8; //此处为假数据
+  battery_state_msg.percentage = (float)(battery_state_msg.voltage / 11.1f);
+  if(battery_state == 0)
+  {
+    battery_state_msg.present = false;
+  }
+  else
+  {
+    battery_state_msg.present = true;
+  }
+  battery_state_pub.publish(&battery_state_msg);
 }
 
 //Publish msgs (IMU data:angular velocity, linear acceleration, orientation)
@@ -480,106 +548,107 @@ void updateGoalVelocity(void)
   goal_velocity[ANGULAR] = goal_velocity_from_cmd[ANGULAR];
 }
 
-//目前的PID计算函数还存在一些问题，后续修改。　2019/3/30
-//目前修改了左侧轮子的pid函数，待验证成功后在修改右侧轮子。2019/4/4
-//pid函数验证成功，已将右侧pid函数改为左侧样式，目前左右轮子因为 static float speed_control_integral 变量不能使用相同的PID函数，后续再优化 2019/4/5 8.32
-float leftPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
-{
-  float delta_vel;
-  float fP,fI;
-  float speed_control_output;
-  static float speed_control_integral;
+/*下面部分屏蔽掉是因为下面代码适用的是稳定底盘，该部分代码功能正常2019/4/14*/
+// //目前的PID计算函数还存在一些问题，后续修改。　2019/3/30
+// //目前修改了左侧轮子的pid函数，待验证成功后在修改右侧轮子。2019/4/4
+// //pid函数验证成功，已将右侧pid函数改为左侧样式，目前左右轮子因为 static float speed_control_integral 变量不能使用相同的PID函数，后续再优化 2019/4/5 8.32
+// float leftPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
+// {
+//   float delta_vel;
+//   float fP,fI;
+//   float speed_control_output;
+//   static float speed_control_integral;
   
-  delta_vel = goal_vel - real_vel;
+//   delta_vel = goal_vel - real_vel;
    
-  fP = delta_vel * kp;
-  fI = delta_vel * ki;
+//   fP = delta_vel * kp;
+//   fI = delta_vel * ki;
   
-  speed_control_integral += fI;
+//   speed_control_integral += fI;
   
-  speed_control_output = fP + speed_control_integral;
-  return speed_control_output;
-}
+//   speed_control_output = fP + speed_control_integral;
+//   return speed_control_output;
+// }
 
-float rightPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
-{
-  float delta_vel;
-  float fP,fI;
-  float speed_control_output;
-  static float speed_control_integral;
+// float rightPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
+// {
+//   float delta_vel;
+//   float fP,fI;
+//   float speed_control_output;
+//   static float speed_control_integral;
   
-  delta_vel = goal_vel - real_vel;
+//   delta_vel = goal_vel - real_vel;
    
-  fP = delta_vel * kp;
-  fI = delta_vel * ki;
+//   fP = delta_vel * kp;
+//   fI = delta_vel * ki;
   
-  speed_control_integral += fI;
+//   speed_control_integral += fI;
   
-  speed_control_output = fP + speed_control_integral;
-  return speed_control_output;
-}
+//   speed_control_output = fP + speed_control_integral;
+//   return speed_control_output;
+// }
 
-float motor_output[WHEEL_NUM];
-// left motor:  gpio : PB13,PB12   PWM: PA3
-// right motor: gpio : PB14,PB15   PWM: PA2
-void motorControl(float linear_vel, float angular_vel)
-{
-  float goal_vel[WHEEL_NUM], current_vel[WHEEL_NUM];
-  //float motor_output[WHEEL_NUM];
+// float motor_output[WHEEL_NUM];
+// // left motor:  gpio : PB13,PB12   PWM: PA3
+// // right motor: gpio : PB14,PB15   PWM: PA2
+// void motorControl(float linear_vel, float angular_vel)
+// {
+//   float goal_vel[WHEEL_NUM], current_vel[WHEEL_NUM];
+//   //float motor_output[WHEEL_NUM];
   
-  //计算左右轮子目标速度值
-  goal_vel[LEFT]  = linear_vel - (angular_vel * WHEEL_SEPARATION / 2);
-  goal_vel[RIGHT] = linear_vel + (angular_vel * WHEEL_SEPARATION / 2);
+//   //计算左右轮子目标速度值
+//   goal_vel[LEFT]  = linear_vel - (angular_vel * WHEEL_SEPARATION / 2);
+//   goal_vel[RIGHT] = linear_vel + (angular_vel * WHEEL_SEPARATION / 2);
 
-  //计算左右轮子当前速度值
-  current_vel[LEFT] = last_velocity[LEFT] * WHEEL_RADIUS;
-  current_vel[RIGHT] = last_velocity[RIGHT] * WHEEL_RADIUS;
+//   //计算左右轮子当前速度值
+//   current_vel[LEFT] = last_velocity[LEFT] * WHEEL_RADIUS;
+//   current_vel[RIGHT] = last_velocity[RIGHT] * WHEEL_RADIUS;
   
-  //结合PID计算当前的电机输出
-  motor_output[LEFT] = leftPIDCaculate(goal_vel[LEFT], current_vel[LEFT], 1000, 800);
-  motor_output[RIGHT] = rightPIDCaculate(goal_vel[RIGHT], current_vel[RIGHT], 1000, 800);
+//   //结合PID计算当前的电机输出
+//   motor_output[LEFT] = leftPIDCaculate(goal_vel[LEFT], current_vel[LEFT], 1000, 800);
+//   motor_output[RIGHT] = rightPIDCaculate(goal_vel[RIGHT], current_vel[RIGHT], 1000, 800);
   
-  if(motor_output[LEFT] > 0)
-  {
-    setMotorDirection(LEFT_MOTOR, FRONT);
-    motor_output[LEFT] = motor_output[LEFT] + LEFT_MOTOR_OUT_DEAD_ZONE; // +
-  }
-  else
-  {
-    setMotorDirection(LEFT_MOTOR, BACK);
-    motor_output[LEFT] = motor_output[LEFT] - LEFT_MOTOR_OUT_DEAD_ZONE; // +
-  }
+//   if(motor_output[LEFT] > 0)
+//   {
+//     setMotorDirection(LEFT_MOTOR, FRONT);
+//     motor_output[LEFT] = motor_output[LEFT] + LEFT_MOTOR_OUT_DEAD_ZONE; // +
+//   }
+//   else
+//   {
+//     setMotorDirection(LEFT_MOTOR, BACK);
+//     motor_output[LEFT] = motor_output[LEFT] - LEFT_MOTOR_OUT_DEAD_ZONE; // +
+//   }
 
-  if(motor_output[RIGHT] > 0)
-  {
-    setMotorDirection(RIGHT_MOTOR, FRONT);
-    motor_output[RIGHT] = motor_output[RIGHT] + RIGHT_MOTOR_OUT_DEAD_ZONE; // +
-  }
-  else
-  {
-    setMotorDirection(RIGHT_MOTOR, BACK);
-    motor_output[RIGHT] =  motor_output[RIGHT] - RIGHT_MOTOR_OUT_DEAD_ZONE; // +
-  }
+//   if(motor_output[RIGHT] > 0)
+//   {
+//     setMotorDirection(RIGHT_MOTOR, FRONT);
+//     motor_output[RIGHT] = motor_output[RIGHT] + RIGHT_MOTOR_OUT_DEAD_ZONE; // +
+//   }
+//   else
+//   {
+//     setMotorDirection(RIGHT_MOTOR, BACK);
+//     motor_output[RIGHT] =  motor_output[RIGHT] - RIGHT_MOTOR_OUT_DEAD_ZONE; // +
+//   }
   
-  //下发速度为零时，确保电机处于停止状态，防止机器人因为推动，出现自己动的情况 
-  //该部分加上会出现更换转的方向时，轮子会沿原来方向转一下，再往回转。
-//  if (linear_vel == 0 && angular_vel == 0)
-//  {
-//    //左轮停转
-//    setMotorDirection(LEFT_MOTOR, STOP);
-//    //右轮停转
-//    setMotorDirection(RIGHT_MOTOR, STOP);
-//    //输出清零
-//    motor_output[LEFT] = motor_output[RIGHT] = 0;
-//  }
+//   //下发速度为零时，确保电机处于停止状态，防止机器人因为推动，出现自己动的情况 
+//   //该部分加上会出现更换转的方向时，轮子会沿原来方向转一下，再往回转。
+// //  if (linear_vel == 0 && angular_vel == 0)
+// //  {
+// //    //左轮停转
+// //    setMotorDirection(LEFT_MOTOR, STOP);
+// //    //右轮停转
+// //    setMotorDirection(RIGHT_MOTOR, STOP);
+// //    //输出清零
+// //    motor_output[LEFT] = motor_output[RIGHT] = 0;
+// //  }
 
-  //电机输出限幅
-  motor_output[LEFT] = constrain(motor_output[LEFT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
-  motor_output[RIGHT] = constrain(motor_output[RIGHT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
+//   //电机输出限幅
+//   motor_output[LEFT] = constrain(motor_output[LEFT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
+//   motor_output[RIGHT] = constrain(motor_output[RIGHT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
 
-  setMotorPwm(LEFT_MOTOR, (uint16_t) abs(motor_output[LEFT]));
-  setMotorPwm(RIGHT_MOTOR, (uint16_t) abs(motor_output[RIGHT]));
-}
+//   setMotorPwm(LEFT_MOTOR, (uint16_t) abs(motor_output[LEFT]));
+//   setMotorPwm(RIGHT_MOTOR, (uint16_t) abs(motor_output[RIGHT]));
+// }
 
 //Send log message
 void sendLogMsg(void)
@@ -618,7 +687,7 @@ void sendLogMsg(void)
 *******************************************************************************/
 void updateTime() 
 {
-  current_offset = micros();
+  current_offset = millis(); //current_offset = micros();
   current_time = nh.now();
 }
 
@@ -627,25 +696,25 @@ void updateTime()
 *******************************************************************************/
 ros::Time rosNow()
 {
-  return addMicros(current_time, micros() - current_offset);
+  return nh.now(); //return addMicros(current_time, micros() - current_offset);
 }
 
 /*******************************************************************************
 * Time Interpolation function
 *******************************************************************************/
-ros::Time addMicros(ros::Time & t, uint32_t _micros)
-{
-  uint32_t sec, nsec;
+// ros::Time addMicros(ros::Time & t, uint32_t _micros)
+// {
+//   uint32_t sec, nsec;
 
-  sec  = _micros / 1000000 + t.sec;
-  nsec = _micros % 1000000 + 1000 * (t.nsec / 1000);
+//   sec  = _micros / 1000000 + t.sec;
+//   nsec = _micros % 1000000 + 1000 * (t.nsec / 1000);
   
-  if (nsec >= 1e9) 
-  {
-    sec++, nsec--;
-  }
-  return ros::Time(sec, nsec);
-}
+//   if (nsec >= 1e9) 
+//   {
+//     sec++, nsec--;
+//   }
+//   return ros::Time(sec, nsec);
+// }
 
 //下面部分为TIM1中断服务函数，待后续探索其用途。2019/4/5 8.26
 
@@ -671,7 +740,7 @@ void TIM1_UP_IRQHandler(void)
   if(TIM_GetFlagStatus(TIM1, TIM_IT_Update) != RESET)
   {
     TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
-    //ms_cnt++;
+    ms_cnt++;
     
     //中断服务程序：
     g_n1MsEventCount ++;
@@ -693,8 +762,7 @@ void TIM1_UP_IRQHandler(void)
     else if(g_n1MsEventCount == 1)
     {
       //更新IMU数据
-      //MPU_DMP_ReadData(gyro, accel, quat, rpy);  //该函数放在while循环中，小车电机就会失控，尚不清楚原因。 
-      MPU_DMP_ReadData(&imu_data);      
+      //MPU_DMP_ReadData(&imu_data);  //该函数放在while循环中，小车电机就会失控，尚不清楚原因。     
     }
     else if(g_n1MsEventCount == 2)
     {
@@ -723,44 +791,45 @@ void TIM1_UP_IRQHandler(void)
     }
     
     
-  //   //ms_cnt = millis();  //使用该句，发布频率会比需要的发布频率低很多
-  //   //updateTime();
-  //    if((ms_cnt - rate_cnt[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
-  //  {   
-  //    updateGoalVelocity();
-  //    //motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
-  //    rate_cnt[0] = ms_cnt;
-  //  }  
-  //   if((ms_cnt - rate_cnt[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
-  //   {
-  //     publishDriveInformation();
-  //     rate_cnt[2] = ms_cnt;
-  //   }    
-  //  if((ms_cnt - rate_cnt[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
-  //  {
-  //    publishImuMsg();
-  //    rate_cnt[3] = ms_cnt;
-  //  }
-  //  if((ms_cnt - rate_cnt[4]) >= 1000 / LED_BRINK_FERQUENCE)
-  //   {
-  //     if(nh.connected())
-  //     {
-  //       GPIO_WriteBit(GPIOC, GPIO_Pin_13, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOC, GPIO_Pin_13))); //led brink
-  //     }
-  //     else
-  //     {
-  //       GPIO_SetBits(GPIOC, GPIO_Pin_13); //led off
-  //     }
-  //     rate_cnt[4] = ms_cnt;
-  //   }
-  //   if((ms_cnt - rate_cnt[5]) > 1000 / 20)
-  //   {
-  //     publishSonarMsg();
-  //     rate_cnt[5] = ms_cnt;
-  //   }
-  //   MPU_DMP_ReadData(&imu_data);
-  //   sendLogMsg();
-  //   nh.spinOnce();
+    //ms_cnt = millis();  //使用该句，发布频率会比需要的发布频率低很多
+    //updateTime();
+     if((ms_cnt - rate_cnt[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
+   {   
+     updateGoalVelocity();
+     //motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
+     rate_cnt[0] = ms_cnt;
+   }  
+    if((ms_cnt - rate_cnt[2]) >= (1000 / DRIVE_INFORMATION_PUBLISH_FREQUENCY))
+    {
+      publishBatteryStateMsg();
+      publishDriveInformation();
+      rate_cnt[2] = ms_cnt;
+    }    
+   if((ms_cnt - rate_cnt[3]) >= (1000 / IMU_PUBLISH_FREQUENCY))
+   {
+     
+     publishImuMsg();
+     rate_cnt[3] = ms_cnt;
+   }
+   
+    if((ms_cnt - rate_cnt[4]) > 1000 / 10)
+    {
+      publishRpyMsg();
+      publishSonarMsg();
+      rate_cnt[4] = ms_cnt;
+    }
+
+   if((ms_cnt - rate_cnt[9]) >= 1000 / LED_BRINK_FERQUENCE)
+    {
+      if(nh.connected())
+      {
+        led_toggle(LED0);  //toggle led
+      }
+      rate_cnt[9] = ms_cnt;
+    }
+    //MPU_DMP_ReadData(&imu_data);
+    sendLogMsg();
+    nh.spinOnce();
   }
 }
 #ifdef __cplusplus

@@ -183,33 +183,33 @@ void Protocol(void)
   {
     case '0':
       g_fBTSpeedSet = 0;
-      g_fDirectionSet = 0; 
+      g_fBTDirectionSet = 0; 
       //usart3_send_str()
       usart3_send_str(returntemp);
       break;
     case '1':
       g_fBTSpeedSet = 1.3;
-      g_fDirectionSet = 0;
+      g_fBTDirectionSet = 0;
       usart3_send_str(returntemp);
       break;
     case '2':   
       g_fBTSpeedSet = (-1.3);
-      g_fDirectionSet = 0;
+      g_fBTDirectionSet = 0;
       usart3_send_str(returntemp);
       break;
     case '3':
       g_fBTSpeedSet = 0;
-      g_fDirectionSet = 250;
+      g_fBTDirectionSet = 250;
       usart3_send_str(returntemp);
       break;
     case '4':
       g_fBTSpeedSet = 0;
-      g_fDirectionSet = -250;
+      g_fBTDirectionSet = -250;
       usart3_send_str(returntemp);
       break;
     default:
       g_fBTSpeedSet = 0;
-      g_fDirectionSet = 0;
+      g_fBTDirectionSet = 0;
     usart3_send_str(returntemp);
     break;
   }

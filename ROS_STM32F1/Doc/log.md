@@ -68,3 +68,21 @@ BUG:
 
 /* 2019/4/12 */
 1.接下来将该程序加到平衡车平台上。
+
+/* 2019/4/18 */
+1.修改led的驱动源文件，修复了主程序中使用led_toggle()函数没变化的bug。
+2.操作符：按位与“&”的优先级低于相等“==”的优先级，导致了led_toggle()函数不能正常运行。
+if(LEDn & LED_ALL == LED_ALL)   结果为 true 
+ (1)先执行LED == LED_ALL的运算  结果为 1
+ (2)再执行LEDn & 1的运算  此处的LEDn为0x01 结果为 1
+ (3)因此执行完该句后LED0会再次反转这样就又和之前的状态一致了，因而不会闪烁。
+将上式修改为：if((LEDn & LED_ALL) == LED_ALL)
+
+
+/*2019/4/19*/
+1. STM32高级定时器定时时间不准确，在配置时基时增加TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
+   具体细节参考：https://blog.csdn.net/qq_38087069/article/details/85029642
+2.增加pid的订阅函数，可以通过上位机发布pid消息，实现动态调整pid参数信息。
+上位机发布方法：rostopic pub /pid [TAB] [TAB]    将data: 后面的数据改为: (空格)[kp,ki,kd]的格式
+  rostopic pub /pid std_msgs/Float32MultiArry 
+  

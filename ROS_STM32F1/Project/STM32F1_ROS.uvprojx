@@ -667,6 +667,11 @@
               <FileType>8</FileType>
               <FilePath>..\BSP\USARTSerial\USARTSerial.cpp</FilePath>
             </File>
+            <File>
+              <FileName>usart3.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\usart\usart3.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -698,6 +703,11 @@
           <GroupName>User</GroupName>
           <Files>
             <File>
+              <FileName>config.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\config.h</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\main.cpp</FilePath>
@@ -706,11 +716,6 @@
               <FileName>stm32f10x_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\stm32f10x_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>config.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\config.h</FilePath>
             </File>
             <File>
               <FileName>angle_control.c</FileName>
@@ -731,6 +736,16 @@
               <FileName>motor_control.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\motor_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>protocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\protocol.c</FilePath>
+            </File>
+            <File>
+              <FileName>sensor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\sensor.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1407,6 +1422,11 @@
               <FileType>8</FileType>
               <FilePath>..\BSP\USARTSerial\USARTSerial.cpp</FilePath>
             </File>
+            <File>
+              <FileName>usart3.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\usart\usart3.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1438,6 +1458,11 @@
           <GroupName>User</GroupName>
           <Files>
             <File>
+              <FileName>config.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\config.h</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\main.cpp</FilePath>
@@ -1446,11 +1471,6 @@
               <FileName>stm32f10x_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\stm32f10x_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>config.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\config.h</FilePath>
             </File>
             <File>
               <FileName>angle_control.c</FileName>
@@ -1471,6 +1491,16 @@
               <FileName>motor_control.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\motor_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>protocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\protocol.c</FilePath>
+            </File>
+            <File>
+              <FileName>sensor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\sensor.c</FilePath>
             </File>
           </Files>
         </Group>
