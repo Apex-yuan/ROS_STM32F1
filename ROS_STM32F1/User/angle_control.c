@@ -12,11 +12,19 @@ float g_fAngleControlOut;
 float ANGLE_CONTROL_P = 60; //64;
 float ANGLE_CONTROL_D = 0.7; //120;//0.12;
 
-extern IMU_Data imu_data;  //from main.c
+//from main.cpp
+extern IMU_Data imu_data;
+extern float ros_angle_kp;
+extern float ros_angle_kd;
 
 void AngleControl(void)
 {
   float fValue;
+
+  //获取ros下发的角度pd参数
+  ANGLE_CONTROL_P = ros_angle_kp;
+  ANGLE_CONTROL_D = ros_angle_kd;
+
 	g_fCarAngle = RAD2DEG(imu_data.rpy[1]);//imu_data.rpy[1];//g_fRoll;
   g_fGyroscopeAngleSpeed = RAD2DEG(imu_data.gyro[0]);//(float)g_nGyro[0];
   

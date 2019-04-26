@@ -22,7 +22,9 @@ ros::Time rosNow();
 
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg);
 void ledCallback(const std_msgs::Empty& led_msg);
-void pidCallback(const std_msgs::Float32MultiArray & pid_msg);
+void anglePidCallback(const std_msgs::Float32MultiArray & angle_pid_msg);
+void speedPidCallback(const std_msgs::Float32MultiArray & speed_pid_msg);
+void directionPidCallback(const std_msgs::Float32MultiArray & direction_pid_msg);
 
 void initSonar(void);
 void initRpy(void);

@@ -7,11 +7,14 @@ extern "C" {
 
 #include <stdint.h>
 //#include "stm32f10x.h"
+#include "config.h"
 
 #define OPTICAL_ENCODE_CONSTANT  (13*4) //编码器分辨率
 #define REDUCTION_RATIO          30 //减速比
 #define SPEED_CONTROL_PERIOD  100  //速度控制周期（ms）
 #define CAR_SPEED_CONSTANT  (1000.0/SPEED_CONTROL_PERIOD/OPTICAL_ENCODE_CONSTANT/REDUCTION_RATIO)  //单位转化比例值（将速度单位转化为 转/秒，对应轮子转速）
+
+#define MPS2NPS  ((float)1/(2*PI*WHEEL_RADIUS))
 
 #define CAR_SPEED_SET 0
 #define MOTOR_OUT_DEAD_VAL 0

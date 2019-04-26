@@ -43,8 +43,8 @@
 #define TICK2RAD 0.004027683  //    // 0.087890625[deg] * 3.14159265359 / 180 = 0.001533981   
 
 //motor setting
-#define LEFT_MOTOR_OUT_DEAD_ZONE   35
-#define RIGHT_MOTOR_OUT_DEAD_ZONE  30
+#define LEFT_MOTOR_OUT_DEAD_ZONE   20//35
+#define RIGHT_MOTOR_OUT_DEAD_ZONE  20//30
 #define MAX_MOTOR_OUT        1000
 #define MIN_MOTOR_OUT       -1000
    

@@ -21,13 +21,9 @@ extern uint8_t g_nCmdBuf[80];
 extern uint8_t g_nProtocolBuf[80];
 
 
-void usart3_send_char(uint8_t c);
-void usart3_niming_report(uint8_t fun,uint8_t*data,uint8_t len);
-void Send_Data(int16_t *Gyro,int16_t *Accel);
 void vcan_sendware(uint8_t *wareaddr, uint32_t waresize);
-
-void ProtocolCpyData(void);
-void Protocol(void);
+void usart3_irq(void);
+void protocol_process(void);
 
 #ifdef __cplusplus
  } 

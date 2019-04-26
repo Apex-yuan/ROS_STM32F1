@@ -85,4 +85,24 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
 2.增加pid的订阅函数，可以通过上位机发布pid消息，实现动态调整pid参数信息。
 上位机发布方法：rostopic pub /pid [TAB] [TAB]    将data: 后面的数据改为: (空格)[kp,ki,kd]的格式
   rostopic pub /pid std_msgs/Float32MultiArry 
-  
+
+/* 2019/4/22 */
+1. 从ROS端发布数组消息时应注意要提前定义好数组，直接将数组的地址赋值给ROS端的数据地址。如：
+  正确方式：
+   float rpy_data[3];
+   rpy_data[0] = 1;
+   rpy_data[1] = 2;
+   rpy_data[2] = 3;
+   rpy_msg.data = rpy_data;
+  错误方式：
+  rpy_msg.data[1] = imu_data.rpy[1];
+  rpy_msg.data[2] = imu_data.rpy[2]; 
+/* 2019/4/24 */
+1. 实现了方向的PID控制：下发角速度通过pid调节使平衡小车达到稳定角速度旋转。
+  /* 2019/4/26 */
+  1. 优化protocol.c文件内容：
+     （1）删除之前保留的测试代码
+     （2）优化串口数据接收：定义了一个命令缓冲区，可以存放4条指令。
+      (3) 将实际的串口3中断服务函数放到stm32f103_it.c函数中维护，在本文件中实现中断服务函数的原型usart3_irq()
+  2.平衡车的直立控制如何做到在将小车提起时电机停转？
+    思路1：在平衡的小角度范围关闭速度控制仅保留直立控制

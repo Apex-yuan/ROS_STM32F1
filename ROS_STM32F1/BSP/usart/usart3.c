@@ -76,21 +76,54 @@ void usart3_init(uint32_t bound)
   USART_Cmd(USART3, ENABLE);
 }
 
+void usart3_sendByte(uint8_t c)
+{
+  USART_SendData(USART3, c);
+  while(USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET);
+}
 
-//串口2,printf 函数
-//确保一次发送数据不超过USART2_MAX_SEND_LEN字节
+void usart3_sendStr(char * str)
+{
+  while(*str != '\0')
+  {
+    usart3_sendByte(*str++);
+  }
+}
+
+
+/*!
+ *  @brief      发送指定len个字节长度数组 （包括 NULL 也会发送）
+ *  @param      UARTn_e       模块号（UART0~UART5）
+ *  @param      buff        数组地址
+ *  @param      len         发送数组的长度
+ *  @since      v5.0
+ *  Sample usage:       uart_putBuff (UART3,"1234567", 3); //实际发送了3个字节'1','2','3'
+ */
+void usart3_putBuff (uint8_t *buff, uint32_t len)
+{
+    while(len--)
+    {
+        usart3_sendByte(*buff);
+        buff++;
+    }
+}
+
+
+//串口3,printf 函数
+//确保一次发送数据不超过USART3_BUFFER_LEN字节
 void usart3_printf(char* fmt,...)  
 {
   char buffer[USART3_BUFFER_LEN+1];  
 	uint16_t i,j; 
+
 	va_list ap; 
-	va_start(ap,fmt);
-	vsprintf((char*)buffer,fmt,ap);
+	va_start(ap, fmt);
+	vsprintf((char*)buffer, fmt, ap);
 	va_end(ap);
-	i=strlen((const char*)buffer);		//此次发送数据的长度
-	for(j=0;j<i;j++)							//循环发送数据
+	i = strlen((const char*)buffer);		//此次发送数据的长度
+	for(j = 0; j < i; j++)							//循环发送数据
 	{
-	  while(USART_GetFlagStatus(USART3,USART_FLAG_TC)==RESET); //循环发送,直到发送完毕   
+	  while(USART_GetFlagStatus(USART3,USART_FLAG_TC) == RESET); //循环发送,直到发送完毕   
 		USART_SendData(USART3,buffer[j]); 
 	} 
 }

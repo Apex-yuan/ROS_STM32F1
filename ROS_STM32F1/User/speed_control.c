@@ -18,9 +18,12 @@ float g_fBTSpeedSet = 0;
 int left_encoder_count, right_encoder_count;
 
 float SPEED_CONTROL_P = 300;//300;//350;
-float SPEED_CONTROL_I = 5;//0.6;//25;
+float SPEED_CONTROL_I = 0.1;//0.6;//25;
 
+//定义再main.cpp文件中的变量
 extern float goal_velocity[WHEEL_NUM];
+extern float ros_speed_kp;
+extern float ros_speed_ki;
 
 
 //每5ms执行一次累加20次
@@ -47,11 +50,15 @@ void SpeedControl(void)
   float fDelta;
   float fP,fI;
   
+  //获取下发的pid参数
+  SPEED_CONTROL_P = ros_speed_kp;
+  SPEED_CONTROL_I = ros_speed_ki;
+
   g_fCarSpeed = (g_nLeftMotorPulseSigma + g_nRightMotorPulseSigma) / 2;
   g_nLeftMotorPulseSigma = g_nRightMotorPulseSigma = 0;
   g_fCarSpeed *= CAR_SPEED_CONSTANT; //速度单位转化为：转/秒
   
-  fDelta = CAR_SPEED_SET - g_fCarSpeed + g_fBTSpeedSet + goal_velocity[LINEAR]*93.620555; //m/s转化为转每秒  /周长
+  fDelta = CAR_SPEED_SET - g_fCarSpeed + g_fBTSpeedSet + goal_velocity[LINEAR] * MPS2NPS; //m/s转化为转每秒  /周长
   fP = fDelta * SPEED_CONTROL_P;
   fI = fDelta * SPEED_CONTROL_I;
   

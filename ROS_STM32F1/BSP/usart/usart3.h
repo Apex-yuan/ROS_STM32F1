@@ -44,6 +44,9 @@ extern RxFramTypeDef rxFram;
 
 void usart3_init(uint32_t baud);
 void usart3_printf (char * Data, ... );
+void usart3_sendByte(uint8_t c);
+void usart3_sendStr(char * str);
+void usart3_putBuff (uint8_t *buff, uint32_t len);
 
 #ifdef __cplusplus
  }

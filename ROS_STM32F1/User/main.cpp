@@ -47,9 +47,17 @@ tf::TransformBroadcaster tf_broadcaster;
 /* Suberscriber ------------------------------------------------------------------*/
 ros::Subscriber<geometry_msgs::Twist> cmd_vel_sub("cmd_vel", commandVelocityCallback);
 // ros::Subscriber<std_msgs::Empty > led_sub("toggle_led", ledCallback);
-ros::Subscriber<std_msgs::Float32MultiArray> pid_sub("pid", pidCallback);
+ros::Subscriber<std_msgs::Float32MultiArray> angle_pid_sub("set_angle_pid", anglePidCallback);
+ros::Subscriber<std_msgs::Float32MultiArray> speed_pid_sub("set_speed_pid", speedPidCallback);
+ros::Subscriber<std_msgs::Float32MultiArray> direction_pid_sub("set_direction_pid", directionPidCallback);
 
-float ros_kp,ros_ki,ros_kd;
+//最初pid参数的设定
+float ros_angle_kp = 60;//60;
+float ros_angle_kd = 3;//0.7;
+float ros_speed_kp = 350;//300;
+float ros_speed_ki = 1.5;//5;
+float ros_direction_kp = 200;
+float ros_direction_ki = 0.5;
 
 static uint32_t tTime[10];
 float goal_velocity[WHEEL_NUM] = {0.0, 0.0};
@@ -96,12 +104,27 @@ void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg)
   goal_velocity_from_cmd[ANGULAR] = constrain(goal_velocity_from_cmd[ANGULAR], MIN_ANGULAR_VELOCITY, MAX_ANGULAR_VELOCITY);
 }
 
-void pidCallback(const std_msgs::Float32MultiArray & pid_msg)
+//角度采用pd控制i可以为任意值
+void anglePidCallback(const std_msgs::Float32MultiArray & angle_pid_msg)
 {
   //pid_msg.data_length = 3;
-  ros_kp = pid_msg.data[0];
-  ros_ki = pid_msg.data[1];
-  ros_kd = pid_msg.data[2];
+  ros_angle_kp = angle_pid_msg.data[0];
+  //ros_ki = pid_msg.data[1];
+  ros_angle_kd = angle_pid_msg.data[2];
+}
+
+//速度采用pi控制d可以为任意值
+void speedPidCallback(const std_msgs::Float32MultiArray & speed_pid_msg)
+{
+  ros_speed_kp = speed_pid_msg.data[0];
+  ros_speed_ki = speed_pid_msg.data[1];
+}
+
+//方向采用pd控制i可以为任意值
+void directionPidCallback(const std_msgs::Float32MultiArray & direction_pid_msg)
+{
+  ros_direction_kp = direction_pid_msg.data[0];
+  ros_direction_ki = direction_pid_msg.data[1];
 }
 
 // void ledCallback(const std_msgs::Empty& led_msg)
@@ -145,7 +168,9 @@ int main()
   
   nh.subscribe(cmd_vel_sub);
   //nh.subscribe(led_sub);
-  nh.subscribe(pid_sub);
+  nh.subscribe(angle_pid_sub);
+  nh.subscribe(speed_pid_sub);
+  nh.subscribe(direction_pid_sub);
 
   nh.advertise(imu_pub);
   nh.advertise(odom_pub);
@@ -171,15 +196,10 @@ int main()
     //nh.spinOnce(); 该函数可以放在while循环中
     //delay_ms(10);
     
-    vcan_sendware((uint8_t *)g_fware,sizeof(g_fware));
-    delay_ms(10);
+    //vcan_sendware((uint8_t *)g_fware,sizeof(g_fware));
+    //delay_ms(10);
 
-    if(g_bNewLineFlag == 1)
-    {
-      g_bNewLineFlag = 0;
-      ProtocolCpyData();
-      Protocol();
-    }
+    protocol_process(); 
     // test interrupt publish
   }
 /*目前测试在中断中发布节点信息，暂时屏蔽以下代码，待没有问题后在做处理 2019/4/42 15.00*/  
@@ -292,11 +312,31 @@ void publishSonarMsg(void)
   sonar_msg.data = sonar_data;
   sonar_pub.publish(&sonar_msg);
 }
-
+float rpy_data[3];
 //publish msgs(rpy 欧拉角)
 void publishRpyMsg(void)
 {
-  rpy_msg.data = imu_data.rpy;
+  float yaw,delta_yaw;
+  static float last_yaw = 0;
+  //static float yaw_intergral = 0;
+  
+  // static uint32_t last_time;
+  // uint32_t time = millis();
+  // uint32_t delta_time = time - last_time;
+  // last_time = time;
+
+  //通过该方式减弱yaw方向的温漂
+  yaw = imu_data.rpy[2];
+  delta_yaw = yaw - last_yaw;
+  last_yaw = yaw;
+
+  rpy_data[0] = imu_data.rpy[0];
+  rpy_data[1] = imu_data.rpy[1];
+  rpy_data[2] += delta_yaw;
+  
+  rpy_msg.data = rpy_data;
+  //rpy_msg.data[1] = imu_data.rpy[1];
+  //rpy_msg.data[2] = imu_data.rpy[2];//yaw_intergral;
   rpy_pub.publish(&rpy_msg);
 }
 
@@ -762,7 +802,7 @@ void TIM1_UP_IRQHandler(void)
     else if(g_n1MsEventCount == 1)
     {
       //更新IMU数据
-      //MPU_DMP_ReadData(&imu_data);  //该函数放在while循环中，小车电机就会失控，尚不清楚原因。     
+      MPU_DMP_ReadData(&imu_data);  //该函数放在while循环中，小车电机就会失控，尚不清楚原因。     
     }
     else if(g_n1MsEventCount == 2)
     {
