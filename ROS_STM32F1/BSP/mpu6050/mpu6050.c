@@ -244,9 +244,9 @@ uint8_t MPU_DMP_ReadData(IMU_Data *imu)
     {
       imu->quat[i] = quat_raw[i] / q30;  //q30格式转换为浮点数
     }
-		//计算得到欧拉角（俯仰角/横滚角/航向角）
-		imu->rpy[0] = asin(-2 * imu->quat[1] * imu->quat[3] + 2 * imu->quat[0]* imu->quat[2]);	// pitch
-		imu->rpy[1] = atan2(2 * imu->quat[2] * imu->quat[3] + 2 * imu->quat[0] * imu->quat[1], -2 * imu->quat[1] * imu->quat[1] - 2 * imu->quat[2] * imu->quat[2] + 1);	// roll
+		//计算得到欧拉角（横滚角/俯仰角/航向角）
+        imu->rpy[0] = atan2(2 * imu->quat[2] * imu->quat[3] + 2 * imu->quat[0] * imu->quat[1], -2 * imu->quat[1] * imu->quat[1] - 2 * imu->quat[2] * imu->quat[2] + 1);	// roll
+		imu->rpy[1] = asin(-2 * imu->quat[1] * imu->quat[3] + 2 * imu->quat[0]* imu->quat[2]);	// pitch
 		imu->rpy[2] = atan2(2*(imu->quat[1] * imu->quat[2] + imu->quat[0] * imu->quat[3]), imu->quat[0] * imu->quat[0] + imu->quat[1] * imu->quat[1] - imu->quat[2] * imu->quat[2] - imu->quat[3] * imu->quat[3]);	//yaw
 	}
   else 

@@ -743,9 +743,9 @@
               <FilePath>..\User\protocol.c</FilePath>
             </File>
             <File>
-              <FileName>sensor.c</FileName>
+              <FileName>variable.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\sensor.c</FilePath>
+              <FilePath>..\User\variable.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1498,9 +1498,9 @@
               <FilePath>..\User\protocol.c</FilePath>
             </File>
             <File>
-              <FileName>sensor.c</FileName>
+              <FileName>variable.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\sensor.c</FilePath>
+              <FilePath>..\User\variable.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -10,7 +10,7 @@
 #include "speed_control.h"
 #include "direction_control.h"
 #include "motor_control.h"
-#include "sensor.h"
+#include "variable.h"
 #include "protocol.h"
 
 
@@ -51,29 +51,16 @@ ros::Subscriber<std_msgs::Float32MultiArray> angle_pid_sub("set_angle_pid", angl
 ros::Subscriber<std_msgs::Float32MultiArray> speed_pid_sub("set_speed_pid", speedPidCallback);
 ros::Subscriber<std_msgs::Float32MultiArray> direction_pid_sub("set_direction_pid", directionPidCallback);
 
-//最初pid参数的设定
-float ros_angle_kp = 60;//60;
-float ros_angle_kd = 3;//0.7;
-float ros_speed_kp = 350;//300;
-float ros_speed_ki = 1.5;//5;
-float ros_direction_kp = 200;
-float ros_direction_ki = 0.5;
+
 
 static uint32_t tTime[10];
-float goal_velocity[WHEEL_NUM] = {0.0, 0.0};
+//float goal_velocity[WHEEL_NUM] = {0.0, 0.0}; //定义在variable.c文件中
 float goal_velocity_from_cmd[WHEEL_NUM] = {0.0, 0.0};
 
 char odom_header_frame_id[30] = "/odom";
 char odom_child_frame_id[30] = "/base_footprint";
 
 char joint_state_header_frame_id[30];
-
-////record imu data
-//float gyro[3];  // rad/s
-//float accel[3]; // m/s^2
-//float quat[4];   // float format
-//float rpy[3];   // rad
-//IMU_Data imu_data;
 
 //caculate for odometry
 bool init_encoder = true;
@@ -120,7 +107,7 @@ void speedPidCallback(const std_msgs::Float32MultiArray & speed_pid_msg)
   ros_speed_ki = speed_pid_msg.data[1];
 }
 
-//方向采用pd控制i可以为任意值
+//方向采用pi控制d可以为任意值
 void directionPidCallback(const std_msgs::Float32MultiArray & direction_pid_msg)
 {
   ros_direction_kp = direction_pid_msg.data[0];
@@ -516,16 +503,17 @@ bool calcOdometry(double diff_time)
   
   delta_s  = WHEEL_RADIUS * (wheel_l + wheel_r) / 2;
   //通过odom数据计算偏转角raw
-  theta = WHEEL_RADIUS * (wheel_r - wheel_l) / WHEEL_SEPARATION;
-  delta_theta = theta - last_theta;
+  //theta = WHEEL_RADIUS * (wheel_r - wheel_l) / WHEEL_SEPARATION;
+  
   //通过IMU数据计算偏转角raw
-  //theta = atan2f((quat[1] * quat[2] + quat[0] * quat[3]), 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
-  //delta_theta = theta - last_theta;
+  theta = imu_data.rpy[2];//atan2f((quat[1] * quat[2] + quat[0] * quat[3]), 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
+  delta_theta = theta - last_theta;
   
   //compute odometric pose
   odom_pose[0] += delta_s * cos(odom_pose[2] + (delta_theta / 2.0));
   odom_pose[1] += delta_s * sin(odom_pose[2] + (delta_theta / 2.0));
-  odom_pose[2] += theta;//delta_theta;
+  //odom_pose[2] += theta;  //odom
+  odom_pose[2] += delta_theta;  //imu
   
   //compute odometric instantaneouse velocity
   v = delta_s / step_time;
@@ -764,7 +752,7 @@ ros::Time rosNow()
  
  //平衡车
 #define CONTROL_PERIOD 5 //5ms
-#define SPEED_CONTROL_COUNT 20 //20*5=100ms
+#define SPEED_CONTROL_COUNT 2 //20*5=100ms
 #define DIRECTION_CONTROL_COUNT 2 //2*5=10ms
 
 float g_n1MsEventCount = 0;

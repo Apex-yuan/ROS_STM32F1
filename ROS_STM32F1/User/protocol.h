@@ -12,7 +12,6 @@
 #define BYTE2(dwTemp) (*((char *)(&dwTemp) + 2))
 #define BYTE3(dwTemp) (*((char *)(&dwTemp) + 3))
 
-extern float g_fware[8];
 
 extern bool g_bStartBitFlag;
 extern bool g_bNewLineFlag;

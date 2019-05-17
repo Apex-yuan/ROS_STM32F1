@@ -2,8 +2,9 @@
 #include "speed_control.h"
 #include "direction_control.h"
 #include <string.h>
+#include "variable.h"
 
-float g_fware[8];
+
 
 bool g_bStartBitFlag = 0;
 bool g_bNewLineFlag = 0;
