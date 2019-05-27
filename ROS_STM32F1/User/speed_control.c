@@ -13,6 +13,10 @@ float g_fSpeedControlIntegral;
 float g_fSpeedControlOut;
 uint16_t g_nSpeedControlPeriod;
 
+int16_t g_nLeftMotorPulse, g_nRightMotorPulse;
+int16_t g_nLeftMotorPulseLast, g_nRightMotorPulseLast; 
+
+
 float SPEED_CONTROL_P = 300;//300;//350;
 float SPEED_CONTROL_I = 0.1;//0.6;//25;
 
@@ -40,14 +44,24 @@ void SpeedControl(void)
 {
   float fDelta;
   float fP,fI;
-  
+  int16_t nLeftMotorPulseDelta, nRightMotorPulseDelta;
+
   //获取ros下发的pid参数
   SPEED_CONTROL_P = ros_speed_kp;
   SPEED_CONTROL_I = ros_speed_ki;
 
+  //获取编码器的数值
+  g_nLeftMotorPulse = (int16_t)TIM_GetCounter(TIM3);
+  g_nRightMotorPulse = -(int16_t)TIM_GetCounter(TIM4);
+  nLeftMotorPulseDelta =  g_nLeftMotorPulse - g_nLeftMotorPulseLast;
+  nRightMotorPulseDelta = g_nRightMotorPulse - g_nRightMotorPulseLast;
+  g_nLeftMotorPulseLast = g_nLeftMotorPulse;
+  g_nRightMotorPulseLast = g_nRightMotorPulse;
+
   //计算当前速度（转/秒）
-  g_fCarSpeed = (g_nLeftMotorPulseSigma + g_nRightMotorPulseSigma) / 2;
-  g_nLeftMotorPulseSigma = g_nRightMotorPulseSigma = 0;
+  // g_fCarSpeed = (g_nLeftMotorPulseSigma + g_nRightMotorPulseSigma) / 2;
+  // g_nLeftMotorPulseSigma = g_nRightMotorPulseSigma = 0;
+  g_fCarSpeed = (nLeftMotorPulseDelta + nRightMotorPulseDelta) * 0.5;
   g_fCarSpeed *= CAR_SPEED_CONSTANT; //速度单位转化为：转/秒
   
   //速度控制PI运算

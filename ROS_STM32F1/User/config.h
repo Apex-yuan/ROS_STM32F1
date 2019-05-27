@@ -19,7 +19,7 @@
    
 //机器人底盘信息   
 #define WHEEL_NUM  2   
-#define WHEEL_RADIUS   0.0034 //0.033 //meter
+#define WHEEL_RADIUS   0.034 //0.033 //meter
 #define WHEEL_SEPARATION 0.218 //0.160  //meter
    
 #define LINEAR   0

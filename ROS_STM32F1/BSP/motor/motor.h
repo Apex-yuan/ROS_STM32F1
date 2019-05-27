@@ -39,10 +39,10 @@ typedef enum direction_motor
   STOP
 }MotorDirection;
 
-void motorInit(void);
-void TIM2_PWM_Init(uint16_t arr, uint16_t psc);
-void setMotorDirection(MotorChoice choice, MotorDirection direction);
-void setMotorPwm(MotorChoice choice, uint16_t pwm);
+void motor_init(void);
+// void TIM2_PWM_Init(uint16_t arr, uint16_t psc);
+void motor_setDirection(MotorChoice choice, MotorDirection direction);
+void motor_setPwm(MotorChoice choice, uint16_t pwm);
 
 #ifdef __cplusplus
  }

@@ -34,9 +34,14 @@ extern "C" {
 #define R_ENCODER_B_GPIO_CLK  RCC_APB2Periph_GPIOA
 #define R_ENCODER_B_TIM_CHANNEL  TIM_Channel_2
 
+typedef enum 
+{
+  LEFT_ENCODER = 0,
+  RIGHT_ENCODER
+}EncoderChoice;
 
-
-void EncoderInit(void);
+void encoder_init(void);
+int16_t encoder_getCurrentPulse(EncoderChoice choice);
 
 #ifdef __cplusplus
  }

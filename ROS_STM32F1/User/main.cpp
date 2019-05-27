@@ -418,9 +418,11 @@ void publishDriveInformation(void)
   prev_update_time = time_now;
   ros::Time stamp_now = rosNow(); //rosNow();
   
-  encoder_l = left_encoder_count;  //(int16_t)TIM_GetCounter(TIM3);
-  encoder_r = right_encoder_count; //- (int16_t)TIM_GetCounter(TIM4);
-  
+  // encoder_l = left_encoder_count;  //(int16_t)TIM_GetCounter(TIM3);
+  // encoder_r = right_encoder_count; //- (int16_t)TIM_GetCounter(TIM4);
+  encoder_l = (int16_t)TIM_GetCounter(TIM3);
+  encoder_r = -(int16_t)TIM_GetCounter(TIM4);
+
   updateMotorInfo(encoder_l, encoder_r);
   
   calcOdometry((double)(step_time * 0.001));
@@ -517,7 +519,8 @@ bool calcOdometry(double diff_time)
   
   //compute odometric instantaneouse velocity
   v = delta_s / step_time;
-  w = theta / step_time;
+  //w = theta / step_time;
+  w = delta_theta / step_time;
   
   odom_vel[0] = v;
   odom_vel[1] = 0.0;
@@ -638,23 +641,23 @@ void updateGoalVelocity(void)
   
 //   if(motor_output[LEFT] > 0)
 //   {
-//     setMotorDirection(LEFT_MOTOR, FRONT);
+//     motor_setDirection(LEFT_MOTOR, FRONT);
 //     motor_output[LEFT] = motor_output[LEFT] + LEFT_MOTOR_OUT_DEAD_ZONE; // +
 //   }
 //   else
 //   {
-//     setMotorDirection(LEFT_MOTOR, BACK);
+//     motor_setDirection(LEFT_MOTOR, BACK);
 //     motor_output[LEFT] = motor_output[LEFT] - LEFT_MOTOR_OUT_DEAD_ZONE; // +
 //   }
 
 //   if(motor_output[RIGHT] > 0)
 //   {
-//     setMotorDirection(RIGHT_MOTOR, FRONT);
+//     motor_setDirection(RIGHT_MOTOR, FRONT);
 //     motor_output[RIGHT] = motor_output[RIGHT] + RIGHT_MOTOR_OUT_DEAD_ZONE; // +
 //   }
 //   else
 //   {
-//     setMotorDirection(RIGHT_MOTOR, BACK);
+//     motor_setDirection(RIGHT_MOTOR, BACK);
 //     motor_output[RIGHT] =  motor_output[RIGHT] - RIGHT_MOTOR_OUT_DEAD_ZONE; // +
 //   }
   
@@ -663,9 +666,9 @@ void updateGoalVelocity(void)
 // //  if (linear_vel == 0 && angular_vel == 0)
 // //  {
 // //    //×óÂÖÍ£×ª
-// //    setMotorDirection(LEFT_MOTOR, STOP);
+// //    motor_setDirection(LEFT_MOTOR, STOP);
 // //    //ÓÒÂÖÍ£×ª
-// //    setMotorDirection(RIGHT_MOTOR, STOP);
+// //    motor_setDirection(RIGHT_MOTOR, STOP);
 // //    //Êä³öÇåÁã
 // //    motor_output[LEFT] = motor_output[RIGHT] = 0;
 // //  }
@@ -674,8 +677,8 @@ void updateGoalVelocity(void)
 //   motor_output[LEFT] = constrain(motor_output[LEFT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
 //   motor_output[RIGHT] = constrain(motor_output[RIGHT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
 
-//   setMotorPwm(LEFT_MOTOR, (uint16_t) abs(motor_output[LEFT]));
-//   setMotorPwm(RIGHT_MOTOR, (uint16_t) abs(motor_output[RIGHT]));
+//   motor_setPwm(LEFT_MOTOR, (uint16_t) abs(motor_output[LEFT]));
+//   motor_setPwm(RIGHT_MOTOR, (uint16_t) abs(motor_output[RIGHT]));
 // }
 
 //Send log message
@@ -783,7 +786,7 @@ void TIM1_UP_IRQHandler(void)
    {   
     {
       g_n1MsEventCount = 0;
-      GetMotorPulse();
+      // GetMotorPulse();
     }
    }  
     }

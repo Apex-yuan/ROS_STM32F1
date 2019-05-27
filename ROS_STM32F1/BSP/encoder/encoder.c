@@ -75,10 +75,22 @@ void TIM4_ENCODER_Init(void)
   TIM_Cmd(TIM4, ENABLE);  //Ê¹ÄÜTIM1
 }
 
-void EncoderInit(void)
+void encoder_init(void)
 {
   TIM3_ENCODER_Init();
   TIM4_ENCODER_Init();
+}
+
+int16_t encoder_getCurrentPulse(EncoderChoice choice)
+{
+	if(choice == LEFT_ENCODER)
+	{
+		return (int16_t)TIM_GetCounter(TIM3);
+	}
+	if(choice == RIGHT_ENCODER)
+	{
+		return -(int16_t)TIM_GetCounter(TIM4);
+	}
 }
 
 

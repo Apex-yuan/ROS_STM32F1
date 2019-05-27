@@ -2,7 +2,7 @@
 
 // left motor:  gpio:PB13,PB12   PWM: PA3
 // right motor: gpio:PB14,PB15   PWM: PA2
- void TIM2_PWM_Init(uint16_t arr, uint16_t psc)
+ static void TIM2_PWM_Init(uint16_t arr, uint16_t psc)
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
   TIM_TimeBaseInitTypeDef  TIM_TimeBaseInitStructure;
@@ -46,7 +46,7 @@
     
 }
 
-void motorInit(void)
+void motor_init(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
   
@@ -61,7 +61,7 @@ void motorInit(void)
   GPIO_ResetBits(MOTOR_IN_GPIO_PORT, L_MOTOR_IN1_PIN | L_MOTOR_IN2_PIN | R_MOTOR_IN1_PIN | R_MOTOR_IN2_PIN); //电机默认设置为停止状态
 }
 
-void setMotorPwm(MotorChoice choice, uint16_t pwm)
+void motor_setPwm(MotorChoice choice, uint16_t pwm)
 {
   if(choice == LEFT_MOTOR)
   {
@@ -73,7 +73,7 @@ void setMotorPwm(MotorChoice choice, uint16_t pwm)
   }
 }
 
-void setMotorDirection(MotorChoice choice, MotorDirection direction)
+void motor_setDirection(MotorChoice choice, MotorDirection direction)
 {
   if(choice == LEFT_MOTOR)
   {

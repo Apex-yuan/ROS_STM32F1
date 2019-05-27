@@ -32,23 +32,23 @@ void MotorOutput(void)
   //左轮电机
   if(g_fLeftMotorOut > 0)
   {
-    setMotorDirection(LEFT_MOTOR, FRONT);
+    motor_setDirection(LEFT_MOTOR, FRONT);
     g_fLeftMotorOut = g_fLeftMotorOut + LEFT_MOTOR_OUT_DEAD_ZONE; // +
   }
   else
   {
-    setMotorDirection(LEFT_MOTOR, BACK);
+    motor_setDirection(LEFT_MOTOR, BACK);
     g_fLeftMotorOut = g_fLeftMotorOut - LEFT_MOTOR_OUT_DEAD_ZONE; // +
   }
   //右轮电机
   if(g_fRightMotorOut > 0)
   {
-    setMotorDirection(RIGHT_MOTOR, FRONT);
+    motor_setDirection(RIGHT_MOTOR, FRONT);
     g_fRightMotorOut = g_fRightMotorOut + RIGHT_MOTOR_OUT_DEAD_ZONE; // +
   }
   else
   {
-    setMotorDirection(RIGHT_MOTOR, BACK);
+    motor_setDirection(RIGHT_MOTOR, BACK);
     g_fRightMotorOut = g_fRightMotorOut - RIGHT_MOTOR_OUT_DEAD_ZONE; // +
   }
 
@@ -56,18 +56,18 @@ void MotorOutput(void)
   g_fLeftMotorOut = constrain(g_fLeftMotorOut, MIN_MOTOR_OUT, MAX_MOTOR_OUT);
   g_fRightMotorOut = constrain(g_fRightMotorOut, MIN_MOTOR_OUT, MAX_MOTOR_OUT);
 
-  setMotorPwm(LEFT_MOTOR, (uint16_t) fabs(g_fLeftMotorOut));
-  setMotorPwm(RIGHT_MOTOR, (uint16_t) fabs(g_fRightMotorOut));
-//  setMotorDirection(LEFT_MOTOR, FRONT);
-//  setMotorDirection(RIGHT_MOTOR, BACK);
-//  setMotorPwm(LEFT_MOTOR, 200);
-//  setMotorPwm(RIGHT_MOTOR, 200);
+  motor_setPwm(LEFT_MOTOR, (uint16_t) fabs(g_fLeftMotorOut));
+  motor_setPwm(RIGHT_MOTOR, (uint16_t) fabs(g_fRightMotorOut));
+//  motor_setDirection(LEFT_MOTOR, FRONT);
+//  motor_setDirection(RIGHT_MOTOR, BACK);
+//  motor_setPwm(LEFT_MOTOR, 200);
+//  motor_setPwm(RIGHT_MOTOR, 200);
   
   //跌倒关闭电机输出
   if(g_fCarAngle > 50 || g_fCarAngle < (-50))
 	{
-		setMotorPwm(LEFT_MOTOR, 0);
-    setMotorPwm(RIGHT_MOTOR, 0); 
+		motor_setPwm(LEFT_MOTOR, 0);
+    motor_setPwm(RIGHT_MOTOR, 0); 
 	}
 }
 

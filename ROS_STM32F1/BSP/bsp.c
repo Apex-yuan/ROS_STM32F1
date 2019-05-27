@@ -23,8 +23,8 @@ void bsp_init(void)
   delay_ms(3000);
   while(MPU_DMP_Init()); //等待IMU初始化完成
   TIM1_TIMER_Init(999, 71); //因为直接在初始化的时候打开了定时器，所以该函数应放在while(MPU_DMP_Init());之后，防止在初始化mpu6050的过程中触发了中断进程，导致程序跑飞。
-  motorInit();
-  EncoderInit();
+  motor_init();
+  encoder_init();
   //while(MPU_DMP_Init()); //等待IMU初始化完成
   //TIM1_TIMER_Init(999, 71); //
   led_on(LED0); //初始化完成点亮LED灯指示初始化成功
