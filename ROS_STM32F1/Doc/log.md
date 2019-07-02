@@ -115,3 +115,112 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
 
 /* 2019/5/19 */
 1. 修改编码器部分的代码，使速度控制测量转速部分和ROS上发部分相一致。
+
+/* 2019/6/26 */
+1. 将发布函数放在中断中执行会遇到，在rviz中加载不出costmap的问题。（问题指向到了odom上发问题，但中断中的发布频率也是正常的）
+   目前怀疑可能是时间戳的问题。
+2. 修改发布函数的位置，将发布函数放置到while循环中进行。
+
+/* 2019/7/1 */
+1.将之前在main.cpp函数中想保留的代码块暂时先放到这：
+/*下面部分屏蔽掉是因为下面代码适用的是稳定底盘，该部分代码功能正常2019/4/14*/
+// //目前的PID计算函数还存在一些问题，后续修改。　2019/3/30
+// //目前修改了左侧轮子的pid函数，待验证成功后在修改右侧轮子。2019/4/4
+// //pid函数验证成功，已将右侧pid函数改为左侧样式，目前左右轮子因为 static float speed_control_integral 变量不能使用相同的PID函数，后续再优化 2019/4/5 8.32
+// float leftPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
+// {
+//   float delta_vel;
+//   float fP,fI;
+//   float speed_control_output;
+//   static float speed_control_integral;
+  
+//   delta_vel = goal_vel - real_vel;
+   
+//   fP = delta_vel * kp;
+//   fI = delta_vel * ki;
+  
+//   speed_control_integral += fI;
+  
+//   speed_control_output = fP + speed_control_integral;
+//   return speed_control_output;
+// }
+
+// float rightPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
+// {
+//   float delta_vel;
+//   float fP,fI;
+//   float speed_control_output;
+//   static float speed_control_integral;
+  
+//   delta_vel = goal_vel - real_vel;
+   
+//   fP = delta_vel * kp;
+//   fI = delta_vel * ki;
+  
+//   speed_control_integral += fI;
+  
+//   speed_control_output = fP + speed_control_integral;
+//   return speed_control_output;
+// }
+
+// float motor_output[WHEEL_NUM];
+// // left motor:  gpio : PB13,PB12   PWM: PA3
+// // right motor: gpio : PB14,PB15   PWM: PA2
+// void motorControl(float linear_vel, float angular_vel)
+// {
+//   float goal_vel[WHEEL_NUM], current_vel[WHEEL_NUM];
+//   //float motor_output[WHEEL_NUM];
+  
+//   //计算左右轮子目标速度值
+//   goal_vel[LEFT]  = linear_vel - (angular_vel * WHEEL_SEPARATION / 2);
+//   goal_vel[RIGHT] = linear_vel + (angular_vel * WHEEL_SEPARATION / 2);
+
+//   //计算左右轮子当前速度值
+//   current_vel[LEFT] = last_velocity[LEFT] * WHEEL_RADIUS;
+//   current_vel[RIGHT] = last_velocity[RIGHT] * WHEEL_RADIUS;
+  
+//   //结合PID计算当前的电机输出
+//   motor_output[LEFT] = leftPIDCaculate(goal_vel[LEFT], current_vel[LEFT], 1000, 800);
+//   motor_output[RIGHT] = rightPIDCaculate(goal_vel[RIGHT], current_vel[RIGHT], 1000, 800);
+  
+//   if(motor_output[LEFT] > 0)
+//   {
+//     motor_setDirection(LEFT_MOTOR, FRONT);
+//     motor_output[LEFT] = motor_output[LEFT] + LEFT_MOTOR_OUT_DEAD_ZONE; // +
+//   }
+//   else
+//   {
+//     motor_setDirection(LEFT_MOTOR, BACK);
+//     motor_output[LEFT] = motor_output[LEFT] - LEFT_MOTOR_OUT_DEAD_ZONE; // +
+//   }
+
+//   if(motor_output[RIGHT] > 0)
+//   {
+//     motor_setDirection(RIGHT_MOTOR, FRONT);
+//     motor_output[RIGHT] = motor_output[RIGHT] + RIGHT_MOTOR_OUT_DEAD_ZONE; // +
+//   }
+//   else
+//   {
+//     motor_setDirection(RIGHT_MOTOR, BACK);
+//     motor_output[RIGHT] =  motor_output[RIGHT] - RIGHT_MOTOR_OUT_DEAD_ZONE; // +
+//   }
+  
+//   //下发速度为零时，确保电机处于停止状态，防止机器人因为推动，出现自己动的情况 
+//   //该部分加上会出现更换转的方向时，轮子会沿原来方向转一下，再往回转。
+// //  if (linear_vel == 0 && angular_vel == 0)
+// //  {
+// //    //左轮停转
+// //    motor_setDirection(LEFT_MOTOR, STOP);
+// //    //右轮停转
+// //    motor_setDirection(RIGHT_MOTOR, STOP);
+// //    //输出清零
+// //    motor_output[LEFT] = motor_output[RIGHT] = 0;
+// //  }
+
+//   //电机输出限幅
+//   motor_output[LEFT] = constrain(motor_output[LEFT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
+//   motor_output[RIGHT] = constrain(motor_output[RIGHT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
+
+//   motor_setPwm(LEFT_MOTOR, (uint16_t) abs(motor_output[LEFT]));
+//   motor_setPwm(RIGHT_MOTOR, (uint16_t) abs(motor_output[RIGHT]));
+// }

@@ -73,19 +73,20 @@ void motor_setPwm(MotorChoice choice, uint16_t pwm)
   }
 }
 
+//由于电机控制电路为H桥，上下晶体管不能同时导通，为了安全起见，更换电机转速方向时，要先关闭再打开即：先执行引脚复位在执行引脚置位。
 void motor_setDirection(MotorChoice choice, MotorDirection direction)
 {
   if(choice == LEFT_MOTOR)
   {
     if(direction == FRONT)
     {
-      GPIO_SetBits(MOTOR_IN_GPIO_PORT, L_MOTOR_IN1_PIN);
       GPIO_ResetBits(MOTOR_IN_GPIO_PORT, L_MOTOR_IN2_PIN);
+      GPIO_SetBits(MOTOR_IN_GPIO_PORT, L_MOTOR_IN1_PIN);
     }
     else if(direction == BACK)
     {
-      GPIO_SetBits(MOTOR_IN_GPIO_PORT, L_MOTOR_IN2_PIN);
       GPIO_ResetBits(MOTOR_IN_GPIO_PORT, L_MOTOR_IN1_PIN);
+      GPIO_SetBits(MOTOR_IN_GPIO_PORT, L_MOTOR_IN2_PIN);
     }
     else if(direction == STOP)
     {
@@ -96,13 +97,13 @@ void motor_setDirection(MotorChoice choice, MotorDirection direction)
   {
     if(direction == FRONT)
     {
-      GPIO_SetBits(MOTOR_IN_GPIO_PORT, R_MOTOR_IN1_PIN);
       GPIO_ResetBits(MOTOR_IN_GPIO_PORT, R_MOTOR_IN2_PIN);
+      GPIO_SetBits(MOTOR_IN_GPIO_PORT, R_MOTOR_IN1_PIN);
     }
     else if(direction == BACK)
     {
-      GPIO_SetBits(MOTOR_IN_GPIO_PORT, R_MOTOR_IN2_PIN);
       GPIO_ResetBits(MOTOR_IN_GPIO_PORT, R_MOTOR_IN1_PIN);
+      GPIO_SetBits(MOTOR_IN_GPIO_PORT, R_MOTOR_IN2_PIN);
     }
     else if(direction == STOP)
     {

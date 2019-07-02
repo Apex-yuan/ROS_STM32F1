@@ -9,7 +9,7 @@ extern "C" {
 
 #define DIRECTION_SET 0  
 #define DIRECTION_CONTROL_PERIOD 10  //ms
-
+#define DIRECTION_CONTROL_COUNT (DIRECTION_CONTROL_PERIOD / CONTROL_PERIOD) //2*5=10ms
 
 extern float g_fDirectionControlOut;
 extern float g_fDirectionControlNew, g_fDirectionControlOld;

@@ -50,6 +50,10 @@ void DirectionControlOutput(void)
   
   fValue = g_fDirectionControlNew - g_fDirectionControlOld;
   g_fDirectionControlOut = fValue * (g_nDirectionControlPeriod + 1) / DIRECTION_CONTROL_PERIOD + g_fDirectionControlOld; 
+  
+  //–Èƒ‚ æ≤®∆˜œ‘ æ
+  g_fware[5] = g_fDirectionControlOut;
+  g_fware[6] = g_fCardirection*100;
 }
 
 

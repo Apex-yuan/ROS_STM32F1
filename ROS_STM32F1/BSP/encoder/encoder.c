@@ -83,14 +83,23 @@ void encoder_init(void)
 
 int16_t encoder_getCurrentPulse(EncoderChoice choice)
 {
-	if(choice == LEFT_ENCODER)
-	{
-		return (int16_t)TIM_GetCounter(TIM3);
-	}
-	if(choice == RIGHT_ENCODER)
-	{
-		return -(int16_t)TIM_GetCounter(TIM4);
-	}
+//	if(choice == LEFT_ENCODER)
+//	{
+//		return (int16_t)TIM_GetCounter(TIM3);
+//	}
+//	else if(choice == RIGHT_ENCODER)
+//	{
+//		return -(int16_t)TIM_GetCounter(TIM4);
+//	}
+  switch(choice)
+  {
+    case LEFT_ENCODER :
+      return (int16_t)TIM_GetCounter(TIM3);
+    case RIGHT_ENCODER :
+      return -(int16_t)TIM_GetCounter(TIM4);
+    default:
+      return 0;
+  }
 }
 
 

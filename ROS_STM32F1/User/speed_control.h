@@ -10,9 +10,11 @@ extern "C" {
 
 #define OPTICAL_ENCODE_CONSTANT  (13*4) //编码器分辨率
 #define REDUCTION_RATIO          30 //减速比
-#define SPEED_CONTROL_PERIOD  10  //速度控制周期（ms）
+#define SPEED_CONTROL_PERIOD  100  //速度控制周期（ms）
 #define CAR_SPEED_CONSTANT  (1000.0/SPEED_CONTROL_PERIOD/OPTICAL_ENCODE_CONSTANT/REDUCTION_RATIO)  //单位转化比例值（将速度单位转化为 转/秒，对应轮子转速）
 
+#define SPEED_CONTROL_COUNT (SPEED_CONTROL_PERIOD / CONTROL_PERIOD) //20*5=100ms  
+  
 #define MPS2NPS  ((float)1/(2*PI*WHEEL_RADIUS))
 
 #define CAR_SPEED_SET 0
@@ -24,6 +26,7 @@ extern float g_fSpeedControlOutOld, g_fSpeedControlOutNew;
 extern float g_fSpeedControlIntegral;
 extern float g_fSpeedControlOut;
 extern uint16_t g_nSpeedControlPeriod;
+extern float g_nSpeedControlCount;
 
 
 void GetMotorPulse(void);

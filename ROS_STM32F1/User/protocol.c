@@ -63,11 +63,11 @@ void protocol_process(void)
         g_fBTDirectionSet = 0; 
         break;
       case '1':
-        g_fBTSpeedSet = 1.3;
+        g_fBTSpeedSet = 1.0;
         g_fBTDirectionSet = 0;
         break;
       case '2':   
-        g_fBTSpeedSet = (-1.3);
+        g_fBTSpeedSet = (-1.0);
         g_fBTDirectionSet = 0;
         break;
       case '3':
