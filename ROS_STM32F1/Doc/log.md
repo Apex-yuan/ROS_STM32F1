@@ -224,3 +224,8 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
 //   motor_setPwm(LEFT_MOTOR, (uint16_t) abs(motor_output[LEFT]));
 //   motor_setPwm(RIGHT_MOTOR, (uint16_t) abs(motor_output[RIGHT]));
 // }
+
+/* 2019/9/3 */
+1. 新增分支ros_stablecar,用于控制稳定的双轮底盘。
+2. 将平衡车部分的电机输出控制屏蔽掉，然后增加稳定地盘的电机输出控制代码即可完成对稳定地盘的应用测试。
+
