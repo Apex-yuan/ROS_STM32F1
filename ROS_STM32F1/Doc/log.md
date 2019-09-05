@@ -66,6 +66,7 @@ BUG:
 7. 目前所有的发布函数全部移植到了定时器1中断函数中，尚未发现明显问题，先做测试有问题再改为主函数中发布。
 /******************* release V1.0 *******************************/
 
+/**********************ros_balancecar branch*********************/
 /* 2019/4/12 */
 1.接下来将该程序加到平衡车平台上。
 
@@ -225,7 +226,79 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
 //   motor_setPwm(RIGHT_MOTOR, (uint16_t) abs(motor_output[RIGHT]));
 // }
 
+/**********************ros_stablecar branch*********************/
 /* 2019/9/3 */
 1. 新增分支ros_stablecar,用于控制稳定的双轮底盘。
 2. 将平衡车部分的电机输出控制屏蔽掉，然后增加稳定地盘的电机输出控制代码即可完成对稳定地盘的应用测试。
 
+/* 2019/9/5 */
+发现了新的更改下位机参数的策略:
+1. 通过ROS的客户端服务器模型更改参数：
+   （1）：单片机端只能实现无返回值的回调函数，而电脑端需要实现返回值为bool类型的函数。
+   （2）：若单纯实现某些简单的功能也是可行的，但从电脑端会报一个ERROR
+   使用方法：
+   a. 实现服务端的回调函数
+   void pidCallback(const std_srvs::EmptyRequest &pid_req, std_srvs::EmptyResponse &pid_res)
+  {
+    led_toggle(LED0);
+    nh.loginfo("pidCallback回调函数测试");
+  }
+  b. 定义服务器对象
+  ros::ServiceServer<std_srvs::EmptyRequest, std_srvs::EmptyResponse> pid_server("pid", pidCallback);
+  c. main函数中调用下面的发布函数
+   nh.advertiseService(pid_server);
+
+  在单片机和上位机建立rosserial连接之后，启用新的终端调用 rosparam call /pid 可以看到启动rosserial的终端中打印出“pidCallback回调函数测试”的日志。
+2. 通过ROS的动态参数实现参数修改的目的
+   单片机不具备动态参数的实现条件
+
+3. 通过ROS的参数服务器更改下位机参数
+注意问题：
+   (1) 若在每次处理数据之前都用nh.getParam("pid_p",&kp)获取参数，会比较占用CPU资源，影响其他部分的执行速度（实测：之前imu的发布频率可以达到95hz在加上该函数后发布频率会变为60多hz）
+参数整定策略：
+  （1）将参数写到配置文件中（.yaml文件）通过lanunch文件加载该参数文件。
+  （2）下位机在主循环建立了与ROS的连接后，加载已经发布到参数服务器中的参数，若参数未加载成功使用预设在下位机中的参数。
+  （3）设置参数修改标志位，若使能了该标志位，则每2秒获取一次参数服务器的参数
+  （4）等待参数更改完成，将参数更新到参数配置文件中。
+
+     /* 下面部分代码放在主循环中执行，实现的功能是：在与ROS建立连接之后，获取一次参数服务器上的参数 */
+  static uint8_t get_parameter_flag = 1;
+   
+    if(nh.connected())
+     {
+       if(1 == get_parameter_flag)
+     {
+       get_parameter_flag = 0;
+   
+      if(!(nh.getParam("bcbot/pid/debug",&debug)))
+      {
+        debug = 0;
+      }
+      if(!(nh.getParam("bcbot/pid/p",&kp)))
+      {
+        kp = 0;
+      }
+      if(!(nh.getParam("bcbot/pid/i",&ki)))
+      {
+        ki = 0;
+      }
+      if(!(nh.getParam("bcbot/pid/d",&kd)))
+      {
+        kd = 0;
+      }
+      sprintf(aaa,"bcbot/pid/debug=%d",debug);
+      nh.loginfo(aaa); 
+      sprintf(aaa,"bcbot/pid/p=%d",kp);
+      nh.loginfo(aaa);
+      sprintf(aaa,"bcbot/pid/i=%d",ki);
+      nh.loginfo(aaa);
+      sprintf(aaa,"bcbot/pid/d=%d",kd);
+      nh.loginfo(aaa);
+     }
+   } 
+
+/* 2019/9/5 */
+1.目前该代码放到稳定底盘上基本可以跑，但很多参数还不太合适，需要进一步调参
+  （1）odom校准
+  （2）速度PID参数调整
+  （3）验证mpu6050更新函数放在while循环中是否有问题。

@@ -147,9 +147,10 @@ void waitForSerialLink(bool isConnected)
 }
 
 
-
+int kp = 5;
 int main()
 {
+  
   //init hardware periph
   bsp_init();
   
@@ -187,7 +188,11 @@ int main()
    updateTime();
    
    if((t - tTime[0]) >= (1000 / CMD_VEL_PUBLISH_FREQUENCY))
-   {   
+   {  
+     //nh.getParam("pid_p",(char **)kp);
+     //nh.loginfo("pid_p=%d");
+     //usb_printf("pid_p=%d",kp);
+     //ROS_INFO("dddd");
      updateGoalVelocity();
      motorControl(goal_velocity[LINEAR], goal_velocity[ANGULAR]);
      tTime[0] = t;
@@ -485,22 +490,23 @@ bool calcOdometry(double diff_time)
   
   delta_s  = WHEEL_RADIUS * (wheel_l + wheel_r) / 2;
   //通过odom数据计算偏转角raw
-  //theta = WHEEL_RADIUS * (wheel_r - wheel_l) / WHEEL_SEPARATION;
+  theta = WHEEL_RADIUS * (wheel_r - wheel_l) / WHEEL_SEPARATION;
+  delta_theta = theta;
   
   //通过IMU数据计算偏转角raw
-  theta = imu_data.rpy[2];//atan2f((quat[1] * quat[2] + quat[0] * quat[3]), 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
-  delta_theta = theta - last_theta;
+  //theta = imu_data.rpy[2];//atan2f((quat[1] * quat[2] + quat[0] * quat[3]), 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
+  //delta_theta = theta - last_theta;
   
   //compute odometric pose
   odom_pose[0] += delta_s * cos(odom_pose[2] + (delta_theta / 2.0));
   odom_pose[1] += delta_s * sin(odom_pose[2] + (delta_theta / 2.0));
-  //odom_pose[2] += theta;  //odom
-  odom_pose[2] += delta_theta;  //imu
+  odom_pose[2] += theta;  //odom
+  //odom_pose[2] += delta_theta;  //imu
   
   //compute odometric instantaneouse velocity
   v = delta_s / step_time;
-  //w = theta / step_time;
-  w = delta_theta / step_time;
+  w = theta / step_time;  //odom
+  //w = delta_theta / step_time; //imu
   
   odom_vel[0] = v;
   odom_vel[1] = 0.0;
@@ -616,8 +622,8 @@ void updateGoalVelocity(void)
    current_vel[RIGHT] = last_velocity[RIGHT] * WHEEL_RADIUS;
   
    //结合PID计算当前的电机输出
-   motor_output[LEFT] = leftPIDCaculate(goal_vel[LEFT], current_vel[LEFT], 1000, 800);
-   motor_output[RIGHT] = rightPIDCaculate(goal_vel[RIGHT], current_vel[RIGHT], 1000, 800);
+   motor_output[LEFT] = leftPIDCaculate(goal_vel[LEFT], current_vel[LEFT], 800, 5);
+   motor_output[RIGHT] = rightPIDCaculate(goal_vel[RIGHT], current_vel[RIGHT], 800, 5);
   
    if(motor_output[LEFT] > 0)
    {
