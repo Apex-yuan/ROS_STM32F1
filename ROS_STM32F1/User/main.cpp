@@ -148,6 +148,7 @@ void waitForSerialLink(bool isConnected)
 
 
 int kp = 5;
+int16_t debug_l,debug_r;
 int main()
 {
   
@@ -181,6 +182,12 @@ int main()
   initJointStates();
   
   prev_update_time = millis();
+//   while(1)
+//   {
+//     debug_l = (int16_t)TIM_GetCounter(TIM3);
+//     debug_r = -(int16_t)TIM_GetCounter(TIM4);
+//     delay_ms(100);
+//   }
    
  while(1)
  {
@@ -231,6 +238,7 @@ int main()
    
    //处理蓝牙消息
    protocol_process();
+   vcan_sendware((uint8_t *)g_fware,sizeof(g_fware)); 
    
    nh.spinOnce();
    //delay_ms(20);  //
@@ -312,7 +320,7 @@ void publishRpyMsg(void)
 
   //通过该方式减弱yaw方向的温漂
   yaw = imu_data.rpy[2];
-  delta_yaw = yaw - last_yaw;
+  delta_yaw = yaw - last_yaw - 0.000010;
   last_yaw = yaw;
 
   rpy_data[0] = imu_data.rpy[0];
@@ -490,23 +498,26 @@ bool calcOdometry(double diff_time)
   
   delta_s  = WHEEL_RADIUS * (wheel_l + wheel_r) / 2;
   //通过odom数据计算偏转角raw
-  theta = WHEEL_RADIUS * (wheel_r - wheel_l) / WHEEL_SEPARATION;
-  delta_theta = theta;
+//  theta = WHEEL_RADIUS * (wheel_r - wheel_l) / WHEEL_SEPARATION;
+//  delta_theta = theta;
   
   //通过IMU数据计算偏转角raw
-  //theta = imu_data.rpy[2];//atan2f((quat[1] * quat[2] + quat[0] * quat[3]), 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
-  //delta_theta = theta - last_theta;
+  theta = imu_data.rpy[2];//atan2f((quat[1] * quat[2] + quat[0] * quat[3]), 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
+  delta_theta = theta - last_theta - 0.000003;
   
   //compute odometric pose
-  odom_pose[0] += delta_s * cos(odom_pose[2] + (delta_theta / 2.0));
-  odom_pose[1] += delta_s * sin(odom_pose[2] + (delta_theta / 2.0));
-  odom_pose[2] += theta;  //odom
-  //odom_pose[2] += delta_theta;  //imu
+  odom_pose[0] += 0.98 * delta_s * cos(odom_pose[2] + (delta_theta / 2.0));
+  odom_pose[1] += 1 * delta_s * sin(odom_pose[2] + (delta_theta / 2.0));
+//  odom_pose[2] += theta;  //odom
+  odom_pose[2] += delta_theta;  //imu
   
+  g_fware[5] = imu_data.gyro[2];
+    g_fware[6] = odom_pose[2];
+    
   //compute odometric instantaneouse velocity
   v = delta_s / step_time;
-  w = theta / step_time;  //odom
-  //w = delta_theta / step_time; //imu
+  //w = theta / step_time;  //odom
+  w = delta_theta / step_time; //imu
   
   odom_vel[0] = v;
   odom_vel[1] = 0.0;
@@ -569,7 +580,8 @@ void updateGoalVelocity(void)
  //目前的PID计算函数还存在一些问题，后续修改。　2019/3/30
  //目前修改了左侧轮子的pid函数，待验证成功后在修改右侧轮子。2019/4/4
  //pid函数验证成功，已将右侧pid函数改为左侧样式，目前左右轮子因为 static float speed_control_integral 变量不能使用相同的PID函数，后续再优化 2019/4/5 8.32
- float leftPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
+
+float leftPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
  {
    float delta_vel;
    float fP,fI;
@@ -606,6 +618,12 @@ void updateGoalVelocity(void)
  }
 
  float motor_output[WHEEL_NUM];
+ float motor_output_old[WHEEL_NUM];
+ float debug_speed;
+float debug_kp = 50;
+float debug_ki = 0;
+float linear_vel_;
+float angular_vel_;
  // left motor:  gpio : PB13,PB12   PWM: PA3
  // right motor: gpio : PB14,PB15   PWM: PA2
  void motorControl(float linear_vel, float angular_vel)
@@ -616,14 +634,27 @@ void updateGoalVelocity(void)
    //计算左右轮子目标速度值
    goal_vel[LEFT]  = linear_vel - (angular_vel * WHEEL_SEPARATION / 2);
    goal_vel[RIGHT] = linear_vel + (angular_vel * WHEEL_SEPARATION / 2);
+   //goal_vel[LEFT]  = linear_vel_ - (angular_vel_ * WHEEL_SEPARATION / 2);
+   //goal_vel[RIGHT] = linear_vel_ + (angular_vel_ * WHEEL_SEPARATION / 2);
+     //goal_vel[LEFT] = debug_speed;
+     //goal_vel[RIGHT] = debug_speed;
 
    //计算左右轮子当前速度值
    current_vel[LEFT] = last_velocity[LEFT] * WHEEL_RADIUS;
    current_vel[RIGHT] = last_velocity[RIGHT] * WHEEL_RADIUS;
   
    //结合PID计算当前的电机输出
-   motor_output[LEFT] = leftPIDCaculate(goal_vel[LEFT], current_vel[LEFT], 800, 5);
-   motor_output[RIGHT] = rightPIDCaculate(goal_vel[RIGHT], current_vel[RIGHT], 800, 5);
+   motor_output[LEFT] = motor_output_old[LEFT] + leftPIDCaculate(goal_vel[LEFT], current_vel[LEFT], debug_kp, debug_ki);
+   motor_output[RIGHT] = motor_output_old[RIGHT] + rightPIDCaculate(goal_vel[RIGHT], current_vel[RIGHT], debug_kp, debug_ki);
+   motor_output_old[LEFT] = motor_output[LEFT];
+   motor_output_old[RIGHT] = motor_output[RIGHT];
+   
+   g_fware[0] = last_velocity[LEFT];
+   g_fware[1] = last_velocity[RIGHT];
+   g_fware[2] = current_vel[LEFT] * 100;
+   g_fware[3] = current_vel[RIGHT] * 100;
+   g_fware[4] = motor_output[LEFT];
+   g_fware[5] = motor_output[RIGHT];
   
    if(motor_output[LEFT] > 0)
    {
@@ -754,7 +785,8 @@ void TIM1_UP_IRQHandler(void)
     else if(g_n1MsEventCount == 1)
     {
       //更新IMU数据
-      MPU_DMP_ReadData(&imu_data);  //该函数放在while循环中，小车电机就会失控，尚不清楚原因。     
+      MPU_DMP_ReadData(&imu_data);  //该函数放在while循环中，小车电机就会失控，尚不清楚原因。
+      g_fware[7] = imu_data.rpy[2];
     }
     else if(g_n1MsEventCount == 2)
     {

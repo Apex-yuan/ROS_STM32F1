@@ -1,51 +1,54 @@
-/**
-  ******************************************************************************
-  * @file    log.txt
-  * @author  Apex-yuan
-  * @version V1.0
-  * @date    2019-4-4
-  * @brief   用于记录工程文档改变的日志
-  ******************************************************************************
-  * @attention 
-  *
-  ******************************************************************************
-  */ 
+# 工程日志
 
-/* 2019/4/3 V1.0 */
-ROS_STM32F1 机器人底盘程序组件基本完整版：
-1.包含完整的rosserial库
-2.移植了Turtlebot3 burger的部分控制程序（通过topic发布订阅消息：发布imu消息，发布odom消息，发布joint_states消息，订阅cmd_vel消息）
-3.包含mpu6050 dmp库，可直接获取 加速度计、陀螺仪的数据及四元数信息
-4.包含编码器及电机的底层控制函数和电机的PID控制函数，可支持ros下发速度，电机快速达到目标速度。
 
-/* 2019/4/4 */
-  轮子PID控制算法：（方法2：已经实验成功，方法1：目前测试结果不太可以，还需要进一步实验验证）
-1.（类似于平衡小车的速度控制和方向控制）将线速度当作直线方向上的速度控制：速度PI控制，将角速度当作转向的方向控制：方向PD控制。
-2.将目标线速度和角速度转化为两个轮子分别的速度再独立施加速度PI控制
 
-/* 2019/4/5 */
-1.程序卡死在启动文件的 B 处，说明有中断函数没有处理或在C++文件编程时中断函数没加 extern “C”
-#ifdef __cplusplus
-extern "C" {
-#endif
- 中断服务函数 
-#ifdef __cplusplus
-}
-#endif
-2.话题不能在中断服务函数中发布（原因不清楚）
-   实验结果：将话题发布放入中断函数中执行，整个中断的周期会变长（ms计数频率会变慢），上位机端显示话题ID和消息的校验码错误。
-３.TIM_TIMER_Init(uint16_t arr, uint16_t psc) 函数的初始化位置有讲究，如果函数内部的TIM_Cmd(TIM1,ENABLE)为使能状态，
-   函数会立刻进入中断进程，导致一些奇怪的问题（程序死在硬件上访中断）。
-  
-/* 2019/4/9 */
-    topic 发布频率问题：
-1.使用STM32自带的串口USART通过串口模块和ROS通信始终达不到想要的发布频率，发送也建立一个发送缓冲区效果和没有缓冲区时效果一样，
-  不知道是哪里限制了话题的发布的频率。（后面验证一下stm32的主频对发布频率的影响）
-2.使用STM32 虚拟串口可以明显将话题的发布频率提高，基本可以满足需要的发布频率。
-3.后续有必要探究一下发布频率到底由那些因素影响。
+-  **2019/4/3  V1.0** 
+  ROS_STM32F1 机器人底盘程序组件基本完整版：
+  1. 包含完整的rosserial库
+  2. 移植了Turtlebot3 burger的部分控制程序（通过topic发布订阅消息：发布imu消息，发布odom消息，发布joint_states消息，订阅cmd_vel消息）
+  3. 包含mpu6050 dmp库，可直接获取 加速度计、陀螺仪的数据及四元数信息
+  4. 包含编码器及电机的底层控制函数和电机的PID控制函数，可支持ros下发速度，电机快速达到目标速度。
+
+-----
+
+- **2019/4/4 V1.0**
+    轮子PID控制算法：（方法2：已经实验成功，方法1：目前测试结果不太可以，还需要进一步实验验证）
+  1.（类似于平衡小车的速度控制和方向控制）将线速度当作直线方向上的速度控制：速度PI控制，将角速度当作转向的方向控制：方向PD控制。
+  2.将目标线速度和角速度转化为两个轮子分别的速度再独立施加速度PI控制
+
+-----
+
+- **2019/4/5 V1.0**
+
+  1. 程序卡死在启动文件的 B 处，说明有中断函数没有处理或在C++文件编程时中断函数没加 extern “C”
+
+     ```c
+     #ifdef __cplusplus
+     extern "C" {
+     #endif
+      中断服务函数 
+     #ifdef __cplusplus
+     }
+     #endif
+     ```
+
+  2. 话题不能在中断服务函数中发布（原因不清楚）
+
+     - 实验结果：将话题发布放入中断函数中执行，整个中断的周期会变长（ms计数频率会变慢），上位 机端显示话题ID和消息的校验码错误。
+
+  3. TIM_TIMER_Init(uint16_t arr, uint16_t psc) 函数的初始化位置有讲究，如果函数内部的TIM_Cmd(TIM1,ENABLE)为使能状态，函数会立刻进入中断进程，导致一些奇怪的问题（程序死在硬件上访中断）。
+
+  -----
+
+- **2019/4/9 V1.0**
+  - topic 发布频率问题：
+    1. 使用STM32自带的串口USART通过串口模块和ROS通信始终达不到想要的发布频率，发送也建立一个发送缓冲区效果和没有缓冲区时效果一样，不知道是哪里限制了话题的发布的频率。（后面验证一下stm32的主频对发布频率的影响）
+    2. 使用STM32 虚拟串口可以明显将话题的发布频率提高，基本可以满足需要的发布频率。
+    3. 后续有必要探究一下发布频率到底由那些因素影响。
 
 /* 2019/4/10 V1.1 */
 性能增加：
+
 1. 增加了USB虚拟串口的库，并将ROS与STM32的通信由原来的串口转到USB虚拟串口上，明显提高了发布频率。
 2.优化了部分代码（主要时USB虚拟串口库部分，增加了USBSerial文件建立ros层与底层usb虚拟串口的通信接口）
 3.增加了连接装态的显示：通过led灯可以直接看到当前的连接状态，connect: 闪烁，disconnect：关闭
@@ -85,27 +88,29 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
    具体细节参考：https://blog.csdn.net/qq_38087069/article/details/85029642
 2.增加pid的订阅函数，可以通过上位机发布pid消息，实现动态调整pid参数信息。
 上位机发布方法：rostopic pub /pid [TAB] [TAB]    将data: 后面的数据改为: (空格)[kp,ki,kd]的格式
-  rostopic pub /pid std_msgs/Float32MultiArry 
+    rostopic pub /pid std_msgs/Float32MultiArry 
 
 /* 2019/4/22 */
 1. 从ROS端发布数组消息时应注意要提前定义好数组，直接将数组的地址赋值给ROS端的数据地址。如：
-  正确方式：
+    正确方式：
    float rpy_data[3];
    rpy_data[0] = 1;
    rpy_data[1] = 2;
    rpy_data[2] = 3;
    rpy_msg.data = rpy_data;
-  错误方式：
-  rpy_msg.data[1] = imu_data.rpy[1];
-  rpy_msg.data[2] = imu_data.rpy[2]; 
+    错误方式：
+    rpy_msg.data[1] = imu_data.rpy[1];
+    rpy_msg.data[2] = imu_data.rpy[2]; 
 /* 2019/4/24 */
 1. 实现了方向的PID控制：下发角速度通过pid调节使平衡小车达到稳定角速度旋转。
-  /* 2019/4/26 */
+    /* 2019/4/26 */
   1. 优化protocol.c文件内容：
      （1）删除之前保留的测试代码
      （2）优化串口数据接收：定义了一个命令缓冲区，可以存放4条指令。
       (3) 将实际的串口3中断服务函数放到stm32f103_it.c函数中维护，在本文件中实现中断服务函数的原型usart3_irq()
-  2.平衡车的直立控制如何做到在将小车提起时电机停转？
+
+    2.平衡车的直立控制如何做到在将小车提起时电机停转？
+    
     思路1：在平衡的小角度范围关闭速度控制仅保留直立控制
 
 /* 2019/5/16 */
@@ -134,14 +139,14 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
 //   float fP,fI;
 //   float speed_control_output;
 //   static float speed_control_integral;
-  
+
 //   delta_vel = goal_vel - real_vel;
-   
+
 //   fP = delta_vel * kp;
 //   fI = delta_vel * ki;
-  
+
 //   speed_control_integral += fI;
-  
+
 //   speed_control_output = fP + speed_control_integral;
 //   return speed_control_output;
 // }
@@ -152,14 +157,14 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
 //   float fP,fI;
 //   float speed_control_output;
 //   static float speed_control_integral;
-  
+
 //   delta_vel = goal_vel - real_vel;
-   
+
 //   fP = delta_vel * kp;
 //   fI = delta_vel * ki;
-  
+
 //   speed_control_integral += fI;
-  
+
 //   speed_control_output = fP + speed_control_integral;
 //   return speed_control_output;
 // }
@@ -171,7 +176,7 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
 // {
 //   float goal_vel[WHEEL_NUM], current_vel[WHEEL_NUM];
 //   //float motor_output[WHEEL_NUM];
-  
+
 //   //计算左右轮子目标速度值
 //   goal_vel[LEFT]  = linear_vel - (angular_vel * WHEEL_SEPARATION / 2);
 //   goal_vel[RIGHT] = linear_vel + (angular_vel * WHEEL_SEPARATION / 2);
@@ -179,11 +184,11 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
 //   //计算左右轮子当前速度值
 //   current_vel[LEFT] = last_velocity[LEFT] * WHEEL_RADIUS;
 //   current_vel[RIGHT] = last_velocity[RIGHT] * WHEEL_RADIUS;
-  
+
 //   //结合PID计算当前的电机输出
 //   motor_output[LEFT] = leftPIDCaculate(goal_vel[LEFT], current_vel[LEFT], 1000, 800);
 //   motor_output[RIGHT] = rightPIDCaculate(goal_vel[RIGHT], current_vel[RIGHT], 1000, 800);
-  
+
 //   if(motor_output[LEFT] > 0)
 //   {
 //     motor_setDirection(LEFT_MOTOR, FRONT);
@@ -205,7 +210,7 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
 //     motor_setDirection(RIGHT_MOTOR, BACK);
 //     motor_output[RIGHT] =  motor_output[RIGHT] - RIGHT_MOTOR_OUT_DEAD_ZONE; // +
 //   }
-  
+
 //   //下发速度为零时，确保电机处于停止状态，防止机器人因为推动，出现自己动的情况 
 //   //该部分加上会出现更换转的方向时，轮子会沿原来方向转一下，再往回转。
 // //  if (linear_vel == 0 && angular_vel == 0)
@@ -239,13 +244,13 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
    使用方法：
    a. 实现服务端的回调函数
    void pidCallback(const std_srvs::EmptyRequest &pid_req, std_srvs::EmptyResponse &pid_res)
-  {
+    {
     led_toggle(LED0);
     nh.loginfo("pidCallback回调函数测试");
-  }
-  b. 定义服务器对象
-  ros::ServiceServer<std_srvs::EmptyRequest, std_srvs::EmptyResponse> pid_server("pid", pidCallback);
-  c. main函数中调用下面的发布函数
+    }
+    b. 定义服务器对象
+    ros::ServiceServer<std_srvs::EmptyRequest, std_srvs::EmptyResponse> pid_server("pid", pidCallback);
+    c. main函数中调用下面的发布函数
    nh.advertiseService(pid_server);
 
   在单片机和上位机建立rosserial连接之后，启用新的终端调用 rosparam call /pid 可以看到启动rosserial的终端中打印出“pidCallback回调函数测试”的日志。
@@ -256,13 +261,13 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
 注意问题：
    (1) 若在每次处理数据之前都用nh.getParam("pid_p",&kp)获取参数，会比较占用CPU资源，影响其他部分的执行速度（实测：之前imu的发布频率可以达到95hz在加上该函数后发布频率会变为60多hz）
 参数整定策略：
-  （1）将参数写到配置文件中（.yaml文件）通过lanunch文件加载该参数文件。
-  （2）下位机在主循环建立了与ROS的连接后，加载已经发布到参数服务器中的参数，若参数未加载成功使用预设在下位机中的参数。
-  （3）设置参数修改标志位，若使能了该标志位，则每2秒获取一次参数服务器的参数
-  （4）等待参数更改完成，将参数更新到参数配置文件中。
+    （1）将参数写到配置文件中（.yaml文件）通过lanunch文件加载该参数文件。
+    （2）下位机在主循环建立了与ROS的连接后，加载已经发布到参数服务器中的参数，若参数未加载成功使用预设在下位机中的参数。
+    （3）设置参数修改标志位，若使能了该标志位，则每2秒获取一次参数服务器的参数
+    （4）等待参数更改完成，将参数更新到参数配置文件中。
 
      /* 下面部分代码放在主循环中执行，实现的功能是：在与ROS建立连接之后，获取一次参数服务器上的参数 */
-  static uint8_t get_parameter_flag = 1;
+    static uint8_t get_parameter_flag = 1;
    
     if(nh.connected())
      {
@@ -302,3 +307,7 @@ if(LEDn & LED_ALL == LED_ALL)   结果为 true
   （1）odom校准
   （2）速度PID参数调整
   （3）验证mpu6050更新函数放在while循环中是否有问题。
+
+/* 2019/10/14 */
+1. 之前速度控制一直用的是位置式PID，这种PID不适合作为电机的速度控制，修改了pid控制部分的代码，修改为只有p控制。
+2. 当前状态配合上位机修改dwa的加速度参数基本可以实现rviz导航控制。

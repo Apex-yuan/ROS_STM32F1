@@ -105,8 +105,8 @@ void SpeedControlOutput(void)
 //  }
   
   //–Èƒ‚ æ≤®∆˜œ‘ æ
-  g_fware[3] = g_fSpeedControlOut;
-  g_fware[4] = g_fCarSpeed*100;
+//  g_fware[3] = g_fSpeedControlOut;
+//  g_fware[4] = g_fCarSpeed*100;
 }
 
 

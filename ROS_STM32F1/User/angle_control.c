@@ -41,9 +41,9 @@ void AngleControl(void)
   }
   
   //–Èƒ‚ æ≤®∆˜œ‘ æ
-  g_fware[0] = g_fCarAngle;
-  g_fware[1] = g_fGyroscopeAngleSpeed;
-  g_fware[2] = g_fAngleControlOut;
+//  g_fware[0] = g_fCarAngle;
+//  g_fware[1] = g_fGyroscopeAngleSpeed;
+//  g_fware[2] = g_fAngleControlOut;
 }
 
 

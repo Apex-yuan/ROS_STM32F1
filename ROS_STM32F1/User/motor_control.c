@@ -29,7 +29,7 @@ void MotorOutput(void)
     g_fLeftMotorOut = g_fAngleControlOut - g_fSpeedControlOut - g_fDirectionControlOut;
     g_fRightMotorOut = g_fAngleControlOut - g_fSpeedControlOut + g_fDirectionControlOut;
   #endif
-  g_fware[7] = g_fAngleControlOut - g_fSpeedControlOut;
+//  g_fware[7] = g_fAngleControlOut - g_fSpeedControlOut;
   //g_fware[6] = g_fAngleControlOut - g_fSpeedControlOut;
   
   /*电机驱动为H桥电路上下晶体管不能同时导通，增加电机转速方向更换过程中的输出清零操作，以保护电机驱动器 （测试可行后在添加）*/  

@@ -20,7 +20,7 @@
 //机器人底盘信息   
 #define WHEEL_NUM  2   
 #define WHEEL_RADIUS   0.034 //0.033 //meter
-#define WHEEL_SEPARATION 0.218 //0.160  //meter
+#define WHEEL_SEPARATION 0.192 //0.218 //0.160  //meter
    
 #define LINEAR   0
 #define ANGULAR  1
@@ -40,10 +40,13 @@
 //脉冲数转为对应弧度的乘数因子：rad = tick * TICK2RAD
 //轮子转动一圈的脉冲数：13（编码器线数） * 4（一个周期脉冲捕捉次数） * 30（减速比） = 1560
 //单个脉冲对应的弧度即 TICK2RAD = 1 / 1560 * (2*PI)
-#define TICK2RAD 0.004027683  //    // 0.087890625[deg] * 3.14159265359 / 180 = 0.001533981   
+//#define TICK2RAD 0.004027683  //    // 0.087890625[deg] * 3.14159265359 / 180 = 0.001533981
+// 实验测量转动一圈的脉冲数为1320，原因有待于进一步查找 2019/9/8
+#define TICK2RAD 0.004759989  //0.004027683
+
 
 //motor setting
-#define LEFT_MOTOR_OUT_DEAD_ZONE   20//35
+#define LEFT_MOTOR_OUT_DEAD_ZONE   25//35
 #define RIGHT_MOTOR_OUT_DEAD_ZONE  20//30
 #define MAX_MOTOR_OUT        1000
 #define MIN_MOTOR_OUT       -1000
