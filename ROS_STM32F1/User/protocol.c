@@ -1,6 +1,6 @@
 #include "protocol.h"
-#include "speed_control.h"
-#include "direction_control.h"
+//#include "speed_control.h"
+//#include "direction_control.h"
 #include <string.h>
 #include "variable.h"
 

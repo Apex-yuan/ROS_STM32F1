@@ -718,26 +718,6 @@
               <FilePath>..\User\stm32f10x_it.c</FilePath>
             </File>
             <File>
-              <FileName>angle_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\angle_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>speed_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\speed_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>direction_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\direction_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\motor_control.c</FilePath>
-            </File>
-            <File>
               <FileName>protocol.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\protocol.c</FilePath>
@@ -1471,26 +1451,6 @@
               <FileName>stm32f10x_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\stm32f10x_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>angle_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\angle_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>speed_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\speed_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>direction_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\direction_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\motor_control.c</FilePath>
             </File>
             <File>
               <FileName>protocol.c</FileName>

@@ -5,11 +5,6 @@
 #include "bsp.h"
 #include "config.h"
 
-//balance car
-#include "angle_control.h"
-#include "speed_control.h"
-#include "direction_control.h"
-#include "motor_control.h"
 #include "variable.h"
 #include "protocol.h"
 
@@ -51,11 +46,6 @@ ros::Subscriber<std_msgs::Float32MultiArray> angle_pid_sub("set_angle_pid", angl
 ros::Subscriber<std_msgs::Float32MultiArray> speed_pid_sub("set_speed_pid", speedPidCallback);
 ros::Subscriber<std_msgs::Float32MultiArray> direction_pid_sub("set_direction_pid", directionPidCallback);
 
-
-/*平衡控制变量*/
-uint8_t g_n1MsEventCount = 0;
-
-
 static uint32_t tTime[10];
 //float goal_velocity[WHEEL_NUM] = {0.0, 0.0}; //定义在variable.c文件中
 float goal_velocity_from_cmd[WHEEL_NUM] = {0.0, 0.0};
@@ -83,6 +73,9 @@ uint16_t sonar_data[SONAR_NUM] = {1,2,3,4};
 
 //declatation for battery
 uint8_t battery_state = 0;
+
+PID_t left_pid = {0};
+PID_t right_pid = {0};
 
 /*callback -----------------------------------------------------------*/
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg)
@@ -576,54 +569,34 @@ void updateGoalVelocity(void)
   goal_velocity[ANGULAR] = goal_velocity_from_cmd[ANGULAR];
 }
 
-/*下面部分屏蔽掉是因为下面代码适用的是稳定底盘，该部分代码功能正常2019/4/14*/
- //目前的PID计算函数还存在一些问题，后续修改。　2019/3/30
- //目前修改了左侧轮子的pid函数，待验证成功后在修改右侧轮子。2019/4/4
- //pid函数验证成功，已将右侧pid函数改为左侧样式，目前左右轮子因为 static float speed_control_integral 变量不能使用相同的PID函数，后续再优化 2019/4/5 8.32
+//设定pid参数
+void pid_set(PID_t *pid, float kp, float ki, float kd)
+{
+  (*pid).kp = kp;
+  (*pid).ki = ki;
+  (*pid).kd = kd;
+}
 
-float leftPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
- {
-   float delta_vel;
-   float fP,fI;
-   float speed_control_output;
-   static float speed_control_integral;
-  
-   delta_vel = goal_vel - real_vel;
-   
-   fP = delta_vel * kp;
-   fI = delta_vel * ki;
-  
-   speed_control_integral += fI;
-  
-   speed_control_output = fP + speed_control_integral;
-   return speed_control_output;
- }
+//增量pid计算公式
+float pid_caculate(PID_t *pid, float current_value, float target_value)
+{
+    float increment;
+    (*pid).error = target_value - current_value;
+    increment = (*pid).kp * ((*pid).error - (*pid).error_k1)                           //比例项
+                + (*pid).ki * (*pid).error                                             //积分项
+                + (*pid).kd * ((*pid).error - 2 * (*pid).error_k1 + (*pid).error_k2 ); //微分项
+    (*pid).error_k2 = (*pid).error_k1;
+    (*pid).error_k1 = (*pid).error;
+    
+    return increment;
+}
 
- float rightPIDCaculate(float goal_vel, float real_vel, float kp, float ki)
- {
-   float delta_vel;
-   float fP,fI;
-   float speed_control_output;
-   static float speed_control_integral;
-  
-   delta_vel = goal_vel - real_vel;
-   
-   fP = delta_vel * kp;
-   fI = delta_vel * ki;
-  
-   speed_control_integral += fI;
-  
-   speed_control_output = fP + speed_control_integral;
-   return speed_control_output;
- }
+float motor_output[WHEEL_NUM];
+float motor_output_old[WHEEL_NUM];
+float debug_speed;
+float debug_kp = 150;
+float debug_ki = 150;
 
- float motor_output[WHEEL_NUM];
- float motor_output_old[WHEEL_NUM];
- float debug_speed;
-float debug_kp = 50;
-float debug_ki = 0;
-float linear_vel_;
-float angular_vel_;
  // left motor:  gpio : PB13,PB12   PWM: PA3
  // right motor: gpio : PB14,PB15   PWM: PA2
  void motorControl(float linear_vel, float angular_vel)
@@ -634,20 +607,23 @@ float angular_vel_;
    //计算左右轮子目标速度值
    goal_vel[LEFT]  = linear_vel - (angular_vel * WHEEL_SEPARATION / 2);
    goal_vel[RIGHT] = linear_vel + (angular_vel * WHEEL_SEPARATION / 2);
-   //goal_vel[LEFT]  = linear_vel_ - (angular_vel_ * WHEEL_SEPARATION / 2);
-   //goal_vel[RIGHT] = linear_vel_ + (angular_vel_ * WHEEL_SEPARATION / 2);
-     //goal_vel[LEFT] = debug_speed;
-     //goal_vel[RIGHT] = debug_speed;
 
    //计算左右轮子当前速度值
    current_vel[LEFT] = last_velocity[LEFT] * WHEEL_RADIUS;
    current_vel[RIGHT] = last_velocity[RIGHT] * WHEEL_RADIUS;
   
    //结合PID计算当前的电机输出
-   motor_output[LEFT] = motor_output_old[LEFT] + leftPIDCaculate(goal_vel[LEFT], current_vel[LEFT], debug_kp, debug_ki);
-   motor_output[RIGHT] = motor_output_old[RIGHT] + rightPIDCaculate(goal_vel[RIGHT], current_vel[RIGHT], debug_kp, debug_ki);
-   motor_output_old[LEFT] = motor_output[LEFT];
-   motor_output_old[RIGHT] = motor_output[RIGHT];
+  /* 2019/11/15
+   * 1.此处有个疑问：电机输出不能写成如此格式：motor_output[LEFT] += pid_caculate(&left_pid, current_vel[LEFT], goal_vel[LEFT]);
+   *   需要后续测试中寻找原因！
+   */
+  pid_set(&left_pid, debug_kp, debug_ki, 0);
+  pid_set(&right_pid, debug_kp, debug_ki, 0);
+  motor_output[LEFT] = motor_output_old[LEFT] + pid_caculate(&left_pid, current_vel[LEFT], goal_vel[LEFT]);
+  motor_output[RIGHT] = motor_output_old[RIGHT] + pid_caculate(&right_pid, current_vel[RIGHT], goal_vel[RIGHT]);
+  /*记录电机输出历史值*/
+  motor_output_old[LEFT] = motor_output[LEFT];
+  motor_output_old[RIGHT] = motor_output[RIGHT];
    
    g_fware[0] = last_velocity[LEFT];
    g_fware[1] = last_velocity[RIGHT];
@@ -763,6 +739,18 @@ ros::Time rosNow()
 #ifdef __cplusplus
 extern "C" {
 #endif
+  
+/*
+ * 2019/11/15
+ * 暂时保留该中断服务函数，目前该中断服务函数主要负责mpu数据的更新处理，后续如果有其他传感器数据也可以放到此处更新处理。
+ * 1. mpu数据更新周期   5ms
+ */
+
+/*控制周期*/
+#define CONTROL_PERIOD 5 //5ms
+/*平衡控制变量*/
+uint8_t g_n1MsEventCount = 0;
+  
 void TIM1_UP_IRQHandler(void)
 {
   if(TIM_GetFlagStatus(TIM1, TIM_IT_Update) != RESET)
@@ -771,12 +759,7 @@ void TIM1_UP_IRQHandler(void)
     
     //中断服务程序：
     g_n1MsEventCount ++;
-    
-    g_nSpeedControlPeriod ++;
-    SpeedControlOutput();
-    g_nDirectionControlPeriod ++;
-    DirectionControlOutput();
-    
+
     if(g_n1MsEventCount >= CONTROL_PERIOD)
     {
       g_n1MsEventCount = 0;
@@ -790,28 +773,12 @@ void TIM1_UP_IRQHandler(void)
     }
     else if(g_n1MsEventCount == 2)
     {
-      AngleControl();
-      // MotorOutput();
     }
     else if (g_n1MsEventCount == 3)
     {
-      g_nSpeedControlCount ++;
-      if(g_nSpeedControlCount >= SPEED_CONTROL_COUNT)
-      {
-        SpeedControl();
-        g_nSpeedControlCount = 0;
-        g_nSpeedControlPeriod = 0;
-      }
     }
     else if(g_n1MsEventCount == 4)
     {
-      g_nDirectionControlCount ++;
-      if(g_nDirectionControlCount >= DIRECTION_CONTROL_COUNT)
-      {
-        DirectionControl();
-        g_nDirectionControlCount = 0;
-        g_nDirectionControlPeriod = 0;
-      }
     }
   }
 }
