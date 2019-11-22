@@ -1,10 +1,21 @@
 # ROS_STM32F1
-## 基于STM32F1平台的ROS机器人稳定底盘控制程序
+
+## master branch
+
+==**基于STM32F1平台建立ROS和STM32之间的通信模板**==
+
+## ros_balancecar branch
+
+==**基于STM32F1平台的ROS机器人平衡底盘控制程序**==
+
+## ros_stablecar branch
+
+==**基于STM32F1平台的ROS机器人稳定底盘控制程序**==
 
 
 ### 使用方法
 1. 通过usb线直接连接到STM32F1平台的usb接口，和已经安装好ros的ubuntu系统的电脑。
-  ~~//1. 通过usb转串口模块连接到STM32F1平台的USART3串口（可以在程序中配置为其他串口）和已安装好ros的Ubuntu系统的电脑。~~
+    ~~//1. 通过usb转串口模块连接到STM32F1平台的USART3串口（可以在程序中配置为其他串口）和已安装好ros的Ubuntu系统的电脑。~~
 
 2. 启动终端，输入roscore 回车。
 

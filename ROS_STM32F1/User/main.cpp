@@ -7,6 +7,7 @@
 
 #include "variable.h"
 #include "protocol.h"
+#include "motor_output.h"
 
 
 /* ROS NodeHandle ------------------------------------------------------------------*/
@@ -35,7 +36,7 @@ std_msgs::Float32MultiArray rpy_msg;
 ros::Publisher rpy_pub("rpy", &rpy_msg);
 
 /* Tranceform Broadcaster ----------------------------------------------------------*/
-geometry_msgs::TransformStamped tfs_msg;
+// geometry_msgs::TransformStamped tfs_msg;
 geometry_msgs::TransformStamped odom_tf;
 tf::TransformBroadcaster tf_broadcaster;
 
@@ -74,8 +75,6 @@ uint16_t sonar_data[SONAR_NUM] = {1,2,3,4};
 //declatation for battery
 uint8_t battery_state = 0;
 
-PID_t left_pid = {0};
-PID_t right_pid = {0};
 
 /*callback -----------------------------------------------------------*/
 void commandVelocityCallback(const geometry_msgs::Twist& cmd_vel_msg)
@@ -140,8 +139,8 @@ void waitForSerialLink(bool isConnected)
 }
 
 
-int kp = 5;
-int16_t debug_l,debug_r;
+// int kp = 5;
+// int16_t debug_l,debug_r;
 int main()
 {
   
@@ -491,8 +490,8 @@ bool calcOdometry(double diff_time)
   
   delta_s  = WHEEL_RADIUS * (wheel_l + wheel_r) / 2;
   //通过odom数据计算偏转角raw
-//  theta = WHEEL_RADIUS * (wheel_r - wheel_l) / WHEEL_SEPARATION;
-//  delta_theta = theta;
+  // theta = WHEEL_RADIUS * (wheel_r - wheel_l) / WHEEL_SEPARATION;
+  // delta_theta = theta;
   
   //通过IMU数据计算偏转角raw
   theta = imu_data.rpy[2];//atan2f((quat[1] * quat[2] + quat[0] * quat[3]), 0.5f - quat[2] * quat[2] - quat[3] * quat[3]);
@@ -501,7 +500,7 @@ bool calcOdometry(double diff_time)
   //compute odometric pose
   odom_pose[0] += 0.98 * delta_s * cos(odom_pose[2] + (delta_theta / 2.0));
   odom_pose[1] += 1 * delta_s * sin(odom_pose[2] + (delta_theta / 2.0));
-//  odom_pose[2] += theta;  //odom
+  // odom_pose[2] += theta;  //odom
   odom_pose[2] += delta_theta;  //imu
   
   g_fware[5] = imu_data.gyro[2];
@@ -569,110 +568,7 @@ void updateGoalVelocity(void)
   goal_velocity[ANGULAR] = goal_velocity_from_cmd[ANGULAR];
 }
 
-//设定pid参数
-void pid_set(PID_t *pid, float kp, float ki, float kd)
-{
-  (*pid).kp = kp;
-  (*pid).ki = ki;
-  (*pid).kd = kd;
-}
 
-//增量pid计算公式
-float pid_caculate(PID_t *pid, float current_value, float target_value)
-{
-    float increment;
-    (*pid).error = target_value - current_value;
-    increment = (*pid).kp * ((*pid).error - (*pid).error_k1)                           //比例项
-                + (*pid).ki * (*pid).error                                             //积分项
-                + (*pid).kd * ((*pid).error - 2 * (*pid).error_k1 + (*pid).error_k2 ); //微分项
-    (*pid).error_k2 = (*pid).error_k1;
-    (*pid).error_k1 = (*pid).error;
-    
-    return increment;
-}
-
-float motor_output[WHEEL_NUM];
-float motor_output_old[WHEEL_NUM];
-float debug_speed;
-float debug_kp = 150;
-float debug_ki = 150;
-
- // left motor:  gpio : PB13,PB12   PWM: PA3
- // right motor: gpio : PB14,PB15   PWM: PA2
- void motorControl(float linear_vel, float angular_vel)
- {
-   float goal_vel[WHEEL_NUM], current_vel[WHEEL_NUM];
-   //float motor_output[WHEEL_NUM];
-  
-   //计算左右轮子目标速度值
-   goal_vel[LEFT]  = linear_vel - (angular_vel * WHEEL_SEPARATION / 2);
-   goal_vel[RIGHT] = linear_vel + (angular_vel * WHEEL_SEPARATION / 2);
-
-   //计算左右轮子当前速度值
-   current_vel[LEFT] = last_velocity[LEFT] * WHEEL_RADIUS;
-   current_vel[RIGHT] = last_velocity[RIGHT] * WHEEL_RADIUS;
-  
-   //结合PID计算当前的电机输出
-  /* 2019/11/15
-   * 1.此处有个疑问：电机输出不能写成如此格式：motor_output[LEFT] += pid_caculate(&left_pid, current_vel[LEFT], goal_vel[LEFT]);
-   *   需要后续测试中寻找原因！
-   */
-  pid_set(&left_pid, debug_kp, debug_ki, 0);
-  pid_set(&right_pid, debug_kp, debug_ki, 0);
-  motor_output[LEFT] = motor_output_old[LEFT] + pid_caculate(&left_pid, current_vel[LEFT], goal_vel[LEFT]);
-  motor_output[RIGHT] = motor_output_old[RIGHT] + pid_caculate(&right_pid, current_vel[RIGHT], goal_vel[RIGHT]);
-  /*记录电机输出历史值*/
-  motor_output_old[LEFT] = motor_output[LEFT];
-  motor_output_old[RIGHT] = motor_output[RIGHT];
-   
-   g_fware[0] = last_velocity[LEFT];
-   g_fware[1] = last_velocity[RIGHT];
-   g_fware[2] = current_vel[LEFT] * 100;
-   g_fware[3] = current_vel[RIGHT] * 100;
-   g_fware[4] = motor_output[LEFT];
-   g_fware[5] = motor_output[RIGHT];
-  
-   if(motor_output[LEFT] > 0)
-   {
-     motor_setDirection(LEFT_MOTOR, FRONT);
-     motor_output[LEFT] = motor_output[LEFT] + LEFT_MOTOR_OUT_DEAD_ZONE; // +
-   }
-   else
-   {
-     motor_setDirection(LEFT_MOTOR, BACK);
-     motor_output[LEFT] = motor_output[LEFT] - LEFT_MOTOR_OUT_DEAD_ZONE; // +
-   }
-
-   if(motor_output[RIGHT] > 0)
-   {
-     motor_setDirection(RIGHT_MOTOR, FRONT);
-     motor_output[RIGHT] = motor_output[RIGHT] + RIGHT_MOTOR_OUT_DEAD_ZONE; // +
-   }
-   else
-   {
-     motor_setDirection(RIGHT_MOTOR, BACK);
-     motor_output[RIGHT] =  motor_output[RIGHT] - RIGHT_MOTOR_OUT_DEAD_ZONE; // +
-   }
-  
-   //下发速度为零时，确保电机处于停止状态，防止机器人因为推动，出现自己动的情况 
-   //该部分加上会出现更换转的方向时，轮子会沿原来方向转一下，再往回转。
- //  if (linear_vel == 0 && angular_vel == 0)
- //  {
- //    //左轮停转
- //    motor_setDirection(LEFT_MOTOR, STOP);
- //    //右轮停转
- //    motor_setDirection(RIGHT_MOTOR, STOP);
- //    //输出清零
- //    motor_output[LEFT] = motor_output[RIGHT] = 0;
- //  }
-
-   //电机输出限幅
-   motor_output[LEFT] = constrain(motor_output[LEFT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
-   motor_output[RIGHT] = constrain(motor_output[RIGHT], MIN_MOTOR_OUT, MAX_MOTOR_OUT);
-
-   motor_setPwm(LEFT_MOTOR, (uint16_t) abs(motor_output[LEFT]));
-   motor_setPwm(RIGHT_MOTOR, (uint16_t) abs(motor_output[RIGHT]));
- }
 
 //Send log message
 void sendLogMsg(void)

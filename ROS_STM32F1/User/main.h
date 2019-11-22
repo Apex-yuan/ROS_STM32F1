@@ -16,16 +16,6 @@
 #include <std_msgs/Float32MultiArray.h>
 
 
-typedef struct pid
-{
-    float kp;
-    float ki;
-    float kd;
-
-    float error;
-    float error_k1; //前一次偏差e(k-1)
-    float error_k2; //前前一次偏差e(k-2)
-}PID_t;
 
 ros::Time addMicros(ros::Time & t, uint32_t _micros);
 void updateTime(); 
@@ -53,7 +43,6 @@ void updateOdometry(void);
 void updateJointStates(void);
 void updateTF(geometry_msgs::TransformStamped& odom_tf);
 void updateGoalVelocity(void);
-void motorControl(float linear_vel, float angular);
 
 void sendLogMsg(void);
 
